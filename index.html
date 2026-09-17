@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>飲みすごろく</title><link rel="stylesheet" href="style.css">
+<script src="events.js" defer></script>
+<script src="game.js" defer></script>
+</head>
+<body>
+<header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>飲み<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-badge">NEON NIGHT</div></header>
+<main>
+<section id="setup" class="panel setup">
+<div class="setup-icon" aria-hidden="true">⚄</div><span class="eyebrow">LET'S PLAY</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
+<form id="setup-form"><label for="count">遊ぶ人数</label><select id="count"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option></select>
+<div id="names"></div><button class="primary" type="submit">ゲームをはじめる →</button></form>
+<p class="note">STARTから30マス先のGOALへ。ぴったり到着でゴール！ 余った目は折り返します。</p>
+</section>
+<section id="game" hidden>
+<div class="game-top"><h2>ゴールを目指そう！</h2><button id="reset" class="text-button">最初から</button></div>
+<div class="layout"><div class="panel board-panel"><div class="legend"><span>START → GOAL</span><span>全30マス</span></div><div class="tile-legend"><span>♥ 全マスお題カード</span><span>全31種類 · 6枚から選ぼう</span></div><div id="board" aria-label="すごろくの盤面"></div></div>
+<aside><div class="panel controls"><span class="eyebrow">YOUR TURN</span><h2 id="turn"></h2><div id="dice" aria-label="サイコロ">⚀</div><p id="message" role="status" aria-live="polite"></p><button id="roll" class="primary">サイコロを振る</button><button id="next" class="primary" hidden>次のプレイヤーへ →</button></div><div class="panel"><h3>プレイヤー</h3><ol id="players"></ol></div></aside></div>
+<div id="results" class="panel results" hidden><span class="eyebrow">FINISH!</span><h2>みんなゴール！</h2><ol id="ranking"></ol><button id="again" class="primary">同じメンバーでもう一度</button></div>
+</section>
+</main>
+<dialog id="event-dialog" aria-labelledby="event-title">
+  <div class="event-top"><span id="event-label" class="eyebrow"></span><button id="event-skip" class="text-button" type="button">パス</button></div>
+  <h2 id="event-title"></h2>
+  <p id="event-description" class="event-description"></p>
+  <div id="event-content"></div>
+  <div id="event-actions"></div>
+</dialog>
+<footer>飲みすごろく · NEON NIGHT</footer>
+</body></html>
