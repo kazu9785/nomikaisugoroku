@@ -98,6 +98,7 @@ function render() {
   $('roll').hidden = phase === 'landed' || phase === 'event' || phase === 'finished';
   $('roll').disabled = phase !== 'ready';
   $('next').hidden = phase !== 'landed';
+  $('catalog-open').disabled = phase === 'rolling' || phase === 'event';
 }
 
 // 到着・順位の処理。イベント完了まで次のプレイヤーには進めません。
@@ -171,6 +172,7 @@ function showResults() {
 
 $('setup-form').addEventListener('submit', event => {
   event.preventDefault();
+  if(!SharedCatalog.isReady())return;
   start(Array.from($('names').querySelectorAll('input'), (input, i) => input.value.trim() || `プレイヤー${i + 1}`));
 });
 $('count').addEventListener('change', renderNameInputs);
@@ -189,6 +191,7 @@ $('reset').addEventListener('click', () => {
   phase = 'setup';
   $('game').hidden = true;
   $('setup').hidden = false;
+  $('catalog-open').disabled = false;
 });
 $('again').addEventListener('click', () => start(players.map(player => player.name)));
 renderNameInputs();

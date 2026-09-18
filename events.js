@@ -27,12 +27,12 @@ const EventEngine = (() => {
     ['10秒ストップ対決', '全員で順番に10秒ストップ！ 10秒から最も遠かった人が飲む番。下のボタンでゲームを開始。', '画面内でプレイ・結果を自動判定', 'drink', 'timer'],
     ['金庫破りで勝負', '全員で交互に数字を選んで、隠れたハズレを避けよう。ハズレを引いた人が飲む番！', '画面内でプレイ・結果を自動判定', 'drink', 'safe'],
     ['山手線ゲーム', 'ランダムで出たテーマで山手線ゲーム！ 負けた人が飲む番。', '画面にはテーマを表示', 'drink', 'food'],
-    ['相手の好みを当てろ', '引いた人が相手を1人選び「甘い／しょっぱい」のどちらが好きか予想。答えを決めてもらってから予想を発表！ 当たれば相手、外れたら自分が飲む番。', '画面で秘密の回答・予想・自動判定', 'drink', 'taste'],
+    ['相手の好みを当てろ', 'ランダムで出る二択で相手の好みを予想！ お題の入れ替えは3回まで。当たれば相手、外れたら自分が飲む番。', '画面で秘密の回答・予想・自動判定', 'drink', 'taste'],
     ['相性二択チャレンジ', '相手1人を選んで3問に秘密で回答。どれだけ同じ答えになるか試そう！ 結果を見ながら理由も話してみて。', '画面内でプレイ・飲まないお題', 'talk', 'pairs'],
     ['ジェスチャー・映画館', '引いた人だけがお題を見て、声なしのジェスチャーで表現。ほかの人は何の動きか当てよう！', '秘密のお題表示・20秒タイマー付き', 'talk', 'gesture'],
-    ['お絵描き・理想の休日', 'アプリのキャンバスに、引いた人が理想の休日を絵だけで描こう。ほかのメンバーは何をして過ごす休日か当てて！', '指・マウスで描画・30秒タイマー付き', 'talk', 'drawing'],
+    ['お絵描きチャレンジ', 'ランダムで出たお題を、アプリのキャンバスに描こう。入れ替えは3回まで。ほかの人は何の絵か当てて！', '指・マウスで描画・30秒タイマー付き', 'talk', 'drawing'],
     ['ほめ言葉リレー', '引いた人以外が順番に、その人のいいところを1つずつ言おう。同じ褒め言葉は使わず1周！', '引いた人は、最後にみんなへお礼をひとこと', 'talk', 'praise'],
-    ['以心伝心チャレンジ', '引いた人が「おにぎりの具」「デートの行き先」「夏の風物詩」からお題を選ぶ。画面で順番に秘密の答えを入力し、一斉公開！ 最大3回で全員一致を目指そう。', '画面内でテーマ選択・秘密の入力・一斉公開', 'talk', 'sync'],
+    ['以心伝心チャレンジ', 'ランダムで出る3候補を見て、引いた人がお題を選ぶ。画面で順番に秘密の答えを入力し、一斉公開！ 最大3回で全員一致を目指そう。', '画面内でテーマ選択・秘密の入力・一斉公開', 'talk', 'sync'],
     ['誰のエピソード？', '3つのテーマから1つ選ぼう。2人なら本当か作り話か、3〜4人なら誰の話かを予想！', '画面内で入力・予想・答え合わせ', 'talk', 'story']
   ];
   const PAIRS = [
@@ -109,18 +109,21 @@ const EventEngine = (() => {
     el('event-dialog').showModal(); focusFirst();
   }
   function cards() {
-    screen(`${members[owner].name}、1枚選んで！`, '6枚の裏向きカードから、気になる1枚をタップ。何が出るかは開いてからのお楽しみ。');
+    screen(`${members[owner].name}、1枚選んで！`, '裏向きカードから、気になる1枚をタップ。何が出るかは開いてからのお楽しみ。');
     // 毎回、飲む系3枚＋飲まない系3枚を混ぜる。裏面は全て同じ。
     function draw(kind, count) {
       const bag = kind === 'drink' ? drinkBag : talkBag;
       const picked = [];
-      while (picked.length < count) {
+      const available = TOPICS.filter(t=>t[3]===kind);
+      while (picked.length < Math.min(count,available.length)) {
         if (!bag.length) bag.push(...shuffle(TOPICS.filter(t => t[3] === kind && !picked.includes(t))));
         picked.push(bag.pop());
       }
       return picked;
     }
-    const hand = shuffle([...draw('drink', 3), ...draw('talk', 3)]);
+    const selectedTopics = [...draw('drink', 3), ...draw('talk', 3)];
+    const extra = shuffle(TOPICS.filter(t=>!selectedTopics.includes(t))).slice(0,6-selectedTopics.length);
+    const hand = shuffle([...selectedTopics,...extra]);
     const grid = node('div', undefined, 'card-grid');
     let selected = false;
     hand.forEach((topic, i) => {
@@ -237,7 +240,12 @@ const EventEngine = (() => {
     '初対面で勘違いされたこと', '小さい頃、本気で信じていたこと',
     '今なら笑える恥ずかしかった出来事', 'みんなが知らなそうな自分の経験',
     '学校やバイト先で起きた面白い出来事', '誰かにしてもらってうれしかったこと',
-    '偶然すぎてびっくりした出来事', '自分では普通だと思っていた変わった習慣'
+    '偶然すぎてびっくりした出来事', '自分では普通だと思っていた変わった習慣',
+    '旅行やお出かけで起きたハプニング', '道に迷ってしまったときの話',
+    '料理や食事で失敗した話', '買い物で思わず笑ってしまった出来事',
+    '動物との忘れられない出来事', '友達と笑いが止まらなくなった話',
+    '緊張しすぎてやってしまったこと', '自分でも驚いた小さな成功',
+    '誰かにサプライズをした・された話', '趣味に夢中になりすぎた話'
   ];
   function storyIntro() {
     screen(`${members[owner].name}、テーマを選ぼう！`, members.length === 2
@@ -360,8 +368,8 @@ const EventEngine = (() => {
   }
   function nominateIntro(topic) {
     choosePartner(topic[0], other => result('相手が決まりました！',topic[1],
-      topic[0] === '相棒を選べ' ? `${members[owner].name}と${members[other].name}で乾杯！`
-      : topic[0] === '質問はひとつだけ' ? `${members[other].name}に質問しよう！`
+      topic[5] === 'pair' ? `${members[owner].name}と${members[other].name}で乾杯！`
+      : topic[5] === 'question' ? `${members[other].name}に質問しよう！`
       : `${members[other].name}が飲む番！`));
   }
   function coinIntro() {
@@ -416,12 +424,57 @@ const EventEngine = (() => {
         `${targets.map(i=>members[i].name).join('・')}が飲む番！`,order.map((id,i)=>`${members[id].name}：${answers[i]+1}`));
     });
   }
+  const SYNC_THEMES = [
+    'おにぎりの具といえば？','デートの行き先といえば？','夏の風物詩といえば？','冬の食べ物といえば？',
+    'コンビニのお菓子といえば？','朝ごはんの定番といえば？','お祭りの屋台といえば？','動物園の人気者といえば？',
+    '旅行のお土産といえば？','カラオケの定番曲といえば？','居酒屋のメニューといえば？','赤い食べ物といえば？',
+    '遊園地の乗り物といえば？','学校行事といえば？','雨の日にすることといえば？','誕生日プレゼントといえば？',
+    '休日に見たい映画といえば？','海に持っていくものといえば？','夜食といえば？','春を感じるものといえば？'
+  ];
+  const TASTE_THEMES = [
+    ['おやつはどっち派？','甘いもの','しょっぱいもの'],['休日はどっちが好き？','お出かけ','おうち時間'],
+    ['旅行するなら？','海','山'],['ペットを迎えるなら？','犬','猫'],
+    ['デートで行くなら？','水族館','遊園地'],['連絡するなら？','メッセージ','電話'],
+    ['映画を観るなら？','映画館','自宅'],['麺を食べるなら？','ラーメン','うどん'],
+    ['もらってうれしいのは？','物のプレゼント','一緒に過ごす体験'],['旅行の計画は？','しっかり決める','気分で決める'],
+    ['好きな季節は？','夏','冬'],['好きな時間帯は？','朝','夜'],
+    ['デザートなら？','ケーキ','アイス'],['朝ごはんは？','ごはん','パン'],
+    ['買い物するなら？','お店で見る','ネットで選ぶ'],['休暇に泊まるなら？','温泉旅館','都会のホテル'],
+    ['運動するなら？','みんなで球技','ひとりでトレーニング'],['音楽を楽しむなら？','ライブに行く','家でじっくり聴く'],
+    ['好きな人と過ごすなら？','にぎやかな街','静かな公園'],['外食するなら？','いつものお店','初めてのお店']
+  ];
+  const DRAWING_THEMES = [
+    '猫','犬','ペンギン','ゾウ','ウサギ','キリン','パンダ','恐竜','たこ焼き','ラーメン',
+    '誕生日ケーキ','観覧車','ジェットコースター','お化け屋敷','キャンプ','花火大会','温泉','カラオケ','寝坊した人','告白している人'
+  ];
+  // 初回＋入れ替え3回は重複なし。上限はこのカードの開始前だけに適用。
+  function chooseSingleTheme(title, pool, describe, begin) {
+    const candidates=shuffle(pool).slice(0,4);
+    let index=0,committed=false;
+    screen(title,'ランダムなお題で挑戦！ 入れ替えは開始前に3回まで。');
+    const shown=node('div',describe(candidates[index]),'single-theme');shown.setAttribute('role','status');
+    el('event-content').append(shown);
+    const startButton=button('このお題で始める →',()=>{
+      if(committed)return;committed=true;begin(candidates[index]);
+    });
+    const change=button('お題を入れ替える（残り3回）',b=>{
+      if(committed||index>=3)return;
+      index++;shown.textContent=describe(candidates[index]);
+      b.textContent=index===3?'入れ替えは残り0回':`お題を入れ替える（残り${3-index}回）`;
+      b.disabled=index===3;
+    },'text-button');
+    el('event-actions').append(startButton,change);focusFirst();
+  }
   function tasteIntro() {
-    choosePartner('好みを当てる相手を選ぼう',other=>{
-      secretChoices([other],'自分の本当の好みは？',['甘いもの','しょっぱいもの'],truth=>{
-        secretChoices([owner],`${members[other].name}の好みを予想！`,['甘いもの','しょっぱいもの'],guess=>{
-          const correct=truth[0]===guess[0];
-          result(correct?'正解！':'はずれ！',`${members[other].name}の好みは「${truth[0]===0?'甘いもの':'しょっぱいもの'}」`,`${members[correct?other:owner].name}が飲む番！`);
+    chooseSingleTheme('相手の好みを当てろ',TASTE_THEMES,t=>`${t[0]}
+${t[1]} ／ ${t[2]}`,theme=>{
+      choosePartner('好みを当てる相手を選ぼう',other=>{
+        const options=theme.slice(1);
+        secretChoices([other],theme[0],options,truth=>{
+          secretChoices([owner],`${members[other].name}の好みを予想！ ${theme[0]}`,options,guess=>{
+            const correct=truth[0]===guess[0];
+            result(correct?'正解！':'はずれ！',`${theme[0]} ${members[other].name}の答えは「${options[truth[0]]}」`,`${members[correct?other:owner].name}が飲む番！`);
+          });
         });
       });
     });
@@ -446,10 +499,11 @@ const EventEngine = (() => {
     el('event-actions').append(button('ゲーム終了・盤面に戻る →', finish));
     focusFirst();
   }
+  const GESTURE_THEMES = ['映画館でポップコーンをこぼした人','寝坊して急いで準備する人','釣った魚が大きすぎた人','熱いラーメンを食べる人','遊園地で怖がる人'];
   function gestureIntro() {
     screen(`${members[owner].name}だけ画面を見てね`,'ほかの人は画面を見ずに待っていてね。準備ができたらお題を表示。');
     el('event-actions').append(button('お題を見る →',()=>{
-      const theme=shuffle(['映画館でポップコーンをこぼした人','寝坊して急いで準備する人','釣った魚が大きすぎた人','熱いラーメンを食べる人','遊園地で怖がる人'])[0];
+      const theme=shuffle(GESTURE_THEMES)[0];
       screen('ジェスチャーのお題',theme);
       el('event-actions').append(button('お題を隠して20秒スタート',()=>{
         screen('何のジェスチャー？',`${members[owner].name}が声を使わずに表現！ みんなで答えを言おう。`);
@@ -471,7 +525,7 @@ const EventEngine = (() => {
   function syncIntro(round=1) {
     screen('以心伝心チャレンジ',`${round} / 3回目。${members[owner].name}がお題を選ぼう。全員が秘密で入力して、最後に同時公開！`);
     const grid=node('div',undefined,'theme-grid');
-    ['おにぎりの具','デートの行き先','夏の風物詩'].forEach(theme=>grid.append(button(theme,()=>syncInput(theme,round,[],0),'choice-button')));
+    shuffle(SYNC_THEMES).slice(0,3).forEach(theme=>grid.append(button(theme,()=>syncInput(theme,round,[],0),'choice-button')));
     el('event-content').append(grid);focusFirst();
   }
   function syncInput(theme,round,answers,turn) {
@@ -498,11 +552,10 @@ const EventEngine = (() => {
     }));focusFirst();
   }
   function drawingIntro() {
-    screen('お絵描き・理想の休日',`${members[owner].name}が画面に指やマウスで描こう。制限30秒。描き終わったら、ほかの人が何をする休日か予想！`);
-    el('event-actions').append(button('キャンバスを開く →',drawingCanvas));
+    chooseSingleTheme('お絵描きチャレンジ',DRAWING_THEMES,t=>t,theme=>drawingCanvas(theme));
   }
-  function drawingCanvas() {
-    screen('理想の休日を描こう！','色・太さを選んで、指やマウスで描けます。');
+  function drawingCanvas(theme) {
+    screen(`「${theme}」を描こう！`,'色・太さを選んで、指やマウスで描けます。制限30秒。ほかの人はお題を見ずに待っていてね。');
     const toolbar=node('div',undefined,'drawing-toolbar');
     const canvas=node('canvas');canvas.id='drawing-canvas';canvas.width=900;canvas.height=600;
     canvas.setAttribute('aria-label','お絵描きキャンバス。指やマウスで描いてください');
@@ -537,13 +590,79 @@ const EventEngine = (() => {
     function reveal(){
       if(ended)return;ended=true;stopClock();endStroke();toolbar.hidden=true;
       canvas.style.touchAction='auto';clock.textContent='完成！';
-      el('event-title').textContent='これはどんな休日？';el('event-description').textContent='みんなで絵を見て予想しよう。描いた人が最後に答えを教えてね。';
-      el('event-actions').replaceChildren(button('答え合わせできた！ →',finish));focusFirst();
+      el('event-title').textContent='これは何の絵？';el('event-description').textContent='みんなで絵を見て予想しよう。描いた人が最後に答えを教えてね。';
+      el('event-actions').replaceChildren(button('正解を表示する',()=>{
+        el('event-title').textContent=`正解は「${theme}」！`;
+        el('event-actions').replaceChildren(button('答え合わせできた！ →',finish));focusFirst();
+      }));focusFirst();
     }
     el('event-actions').append(button('描き終わった・公開する →',reveal));countdown(30,clock,reveal);
   }
 
+  // カード・テーマの編集データ。同じブラウザーのlocalStorageへ保存します。
+  const STORAGE_KEY = 'nomi-sugoroku-catalog-v1';
+  const ACTIONS = {
+    '':'文章のお題',nominate:'相手を指名',rps:'じゃんけん',numbers:'数字選び',coin:'コイントス',free:'好きなゲームを選択',
+    timer:'10秒ストップ',safe:'金庫破り',food:'山手線ゲーム',taste:'相手の好み当て',pairs:'相性二択',
+    gesture:'ジェスチャー',drawing:'お絵描き',praise:'ほめ言葉リレー',sync:'以心伝心',story:'誰のエピソード？'
+  };
+  const POOLS = {
+    food:{label:'山手線ゲームのテーマ',data:YAMANOTE_THEMES,min:1,width:1},
+    taste:{label:'好み当ての質問と二択',data:TASTE_THEMES,min:4,width:3},
+    pairs:{label:'相性二択の質問と二択',data:PAIRS,min:3,width:3},
+    gesture:{label:'ジェスチャーのお題',data:GESTURE_THEMES,min:1,width:1},
+    drawing:{label:'お絵描きのテーマ',data:DRAWING_THEMES,min:4,width:1},
+    sync:{label:'以心伝心のテーマ',data:SYNC_THEMES,min:3,width:1},
+    story:{label:'エピソードのテーマ',data:STORY_THEMES,min:3,width:1}
+  };
+  TOPICS.forEach(t=>{if(t[4]==='nominate')t[5]=t[0]==='相棒を選べ'?'pair':t[0]==='質問はひとつだけ'?'question':'other';});
+  const copy = data => JSON.parse(JSON.stringify(data));
+  function snapshot() {return {version:1,topics:copy(TOPICS),pools:Object.fromEntries(Object.entries(POOLS).map(([k,v])=>[k,copy(v.data)]))};}
+  function validateCatalog(data) {
+    if(!data||data.version!==1||!Array.isArray(data.topics)||data.topics.length<1||data.topics.length>200)throw Error('カードは1〜200枚で設定してください。');
+    const text=(v,max)=>typeof v==='string'&&v.trim().length>0&&v.length<=max;
+    data.topics.forEach(t=>{
+      if(!Array.isArray(t)||!text(t[0],60)||!text(t[1],600)||!text(t[2],300)||!['drink','talk'].includes(t[3])||!Object.hasOwn(ACTIONS,t[4]||''))throw Error('カードの名前・本文・対象・種類を確認してください。');
+      if(t[4]==='nominate'&&!['pair','question','other'].includes(t[5]))throw Error('指名した相手の動作を選んでください。');
+    });
+    if(!data.pools||typeof data.pools!=='object')throw Error('テーマのデータがありません。');
+    for(const [key,meta] of Object.entries(POOLS)){
+      const pool=data.pools[key];
+      if(!Array.isArray(pool)||pool.length<meta.min||pool.length>200)throw Error(`${meta.label}は${meta.min}〜200件必要です。`);
+      const titles=[];
+      pool.forEach(row=>{
+        if(meta.width===1){if(!text(row,150))throw Error(`${meta.label}は1〜150文字で入力してください。`);titles.push(row.trim());}
+        else {
+          if(!Array.isArray(row)||row.length!==3||!row.every(v=>text(v,150)))throw Error(`${meta.label}の質問・選択肢A・選択肢Bを入力してください。`);
+          if(row[1].trim()===row[2].trim())throw Error('二択のAとBは違う内容にしてください。');titles.push(row[0].trim());
+        }
+      });
+      if(new Set(titles).size!==titles.length)throw Error(`${meta.label}に同じ内容が重複しています。`);
+    }
+  }
+  function applyCatalog(data){
+    TOPICS.splice(0,TOPICS.length,...copy(data.topics));
+    for(const [key,meta] of Object.entries(POOLS))meta.data.splice(0,meta.data.length,...copy(data.pools[key]));
+    drinkBag=[];talkBag=[];pairBag=[];
+  }
+  let storageMessage='';
+  async function saveCatalog(data){
+    if(done)throw Error('イベントが終わってから編集してください。');
+    validateCatalog(data);
+    await SharedCatalog.save(data);
+  }
+  function receiveCatalog(data){
+    if(done)throw Error('イベントが終わってから更新してください。');
+    validateCatalog(data);applyCatalog(data);
+  }
+  const editor = {
+    getData:snapshot, save:saveCatalog, receive:receiveCatalog,
+    getActions:()=>({...ACTIONS}),
+    getPoolMeta:()=>Object.fromEntries(Object.entries(POOLS).map(([k,v])=>[k,{label:v.label,min:v.min,width:v.width}])),
+    getMessage:()=>storageMessage
+  };
+
   el('event-skip').addEventListener('click', finish);
   el('event-dialog').addEventListener('cancel', event => {event.preventDefault();finish();});
-  return {tileType,open,reset};
+  return {tileType,open,reset,isBusy:()=>!!done,getCatalog:()=>TOPICS.map(topic=>[...topic]),editor};
 })();
