@@ -62,3 +62,5 @@ button.catalog-card{text-align:left;color:var(--text);font-weight:400;display:fl
 @media(max-width:1000px){.controls #power-panel{grid-column:2;grid-row:4;margin:3px 0 0}.controls #roll,.controls #next{grid-column:2;grid-row:5}.controls .dice-stage{grid-row:1 / 6}.controls #power-panel small{font-size:9px}}
 @media(max-width:480px){.avatar-controls{grid-template-columns:32px 1fr;gap:6px}.avatar-controls .color-select{grid-column:1 / -1}.avatar-preview{width:30px;height:30px;font-size:20px}.card-picked .playing-card.chosen{width:145px}.event-drink-row{font-size:12px}.drink-control{gap:5px}.drink-control button{min-width:36px}#goal-dialog{padding:28px 18px}#goal-title{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.playing-card,.roulette-winner,#confetti i{animation:none!important}.playing-card{transition:none!important}#confetti{display:none}}
+
+.audio-status{flex-basis:100%;font-size:11px;color:var(--muted);line-height:1.6}.sound-bar #sound-test{color:#e7d0ff;border-color:#ad77ff66}

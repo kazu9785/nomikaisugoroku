@@ -76,12 +76,12 @@
       modeArea.replaceChildren();if(topic[4]!=='nominate')return;
       const label=make('label','指名した後の動作','editor-field'), select=make('select');select.id='edit-nominate-mode';
       Object.entries({other:'指名した相手が飲む',pair:'引いた人と相手が一緒に乾杯',question:'指名した相手に質問する'}).forEach(([v,t])=>{const o=make('option',t);o.value=v;select.append(o);});select.value=topic[5]||'other';
-      select.addEventListener('change',()=>{topic[5]=select.value;dirty=true;});label.append(select);modeArea.append(label);
+      select.addEventListener('change',()=>{topic[5]=select.value;dirty=true;renderThemes();});label.append(select);modeArea.append(label);
     }
     function renderThemes(){
-      themesArea.replaceChildren();const meta=poolMeta[topic[4]];
+      themesArea.replaceChildren();const poolKey=topic[4]==='nominate'&&topic[5]==='question'?'question':topic[4];const meta=poolMeta[poolKey];
       if(!meta){themesArea.append(make('p','この動作にはランダムなテーマ一覧はありません。カード名・本文・対象を編集できます。','note'));return;}
-      const rows=draft.pools[topic[4]];
+      const rows=draft.pools[poolKey];
       themesArea.append(make('h3',`${meta.label}（${rows.length}件）`,'editor-title'),make('p',`追加・書き換え・削除ができます。抽選に必要なため最低${meta.min}件。空欄と同じテーマの重複は保存できません。`,'note'));
       if(draft.topics.filter(t=>t[4]===topic[4]).length>1||['taste','food'].includes(topic[4]))themesArea.append(make('p','同じ動作を使うカード・ゲーム選択画面でも、このテーマ一覧を共有します。','note'));
       const list=make('div',undefined,'theme-editor-list');list.id='theme-editor-list';

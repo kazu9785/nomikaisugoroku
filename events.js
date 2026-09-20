@@ -23,7 +23,7 @@ const EventEngine = (() => {
     ['あなたのキャッチコピー', 'ほかのメンバーが相談して、引いた人のキャッチコピーを考えよう！', '本人がうれしくなる紹介文にしよう。', 'talk'],
     ['次のお出かけ会議', '引いた人が、このメンバーで次にやってみたいことを提案！', '旅行・ごはん・ゲーム大会など何でも。', 'talk'],
     ['ありがとうを受け取って', 'ほかのメンバーが、引いた人に感謝していることや、助かったことを1つずつ伝えよう！', '初対面なら今日うれしかったことを。', 'talk'],
-    ['好きな飲みゲームで勝負', '引いた人が、アプリ内のゲームから1つ選んで勝負しよう。負けた人が飲む番！', '画面でゲームを選択して開始', 'drink', 'free'],
+    ['好きな飲みゲームで勝負', '引いた人が、6つの選択肢から好きな飲みゲームを選んで勝負しよう。負けた人が飲む番！', '画面でゲームを選択して開始', 'drink', 'free'],
     ['10秒ストップ対決', '全員で順番に10秒ストップ！ 10秒から最も遠かった人が飲む番。下のボタンでゲームを開始。', '画面内でプレイ・結果を自動判定', 'drink', 'timer'],
     ['金庫破りで勝負', '全員で交互に数字を選んで、隠れたハズレを避けよう。ハズレを引いた人が飲む番！', '画面内でプレイ・結果を自動判定', 'drink', 'safe'],
     ['山手線ゲーム', 'ランダムで出たテーマで山手線ゲーム！ 負けた人が飲む番。', '画面にはテーマを表示', 'drink', 'food'],
@@ -154,7 +154,7 @@ const EventEngine = (() => {
         if (topic[4]) {
           el('event-actions').append(button('このお題を始める →', () => {
             el('event-label').textContent = 'CARD CHALLENGE / お題カードの対決';
-            const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), roulette:rouletteIntro, rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
+            const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), roulette:rouletteIntro, question:questionIntro, rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
             games[topic[4]](); focusFirst();
           }));
         } else {
@@ -401,7 +401,27 @@ const EventEngine = (() => {
     },'choice-button'));});
     el('event-content').append(grid); focusFirst();
   }
+  function questionIntro(){
+    choosePartner('質問する相手を選ぼう', other=>{
+      const bag=shuffle(POOLS.question.data);let changes=0;
+      function offer(){
+        screen(`${members[other].name}に聞く質問を選ぼう`,`${members[owner].name}が、ゲームから出た3つの質問から1つを選びます。`);
+        const grid=node('div',undefined,'theme-grid');
+        bag.splice(0,3).forEach(question=>grid.append(button(question,()=>{
+          screen('この質問を聞いてみよう！',`${members[owner].name} → ${members[other].name}`);
+          el('event-content').append(node('div',question,'single-theme'));
+          el('event-actions').append(button('話し終わった！ →',finish));focusFirst();
+        },'choice-button')));
+        el('event-content').append(grid);
+        const swap=button(`候補を入れ替える（あと${3-changes}回）`,()=>{if(changes>=3||bag.length<3)return;changes++;offer();},'text-button');
+        swap.disabled=changes>=3||bag.length<3;el('event-actions').append(swap);
+        if(bag.length<3&&changes<3)el('event-actions').append(node('p','別の3候補を出すには、質問一覧に質問を追加してください。','note'));
+        focusFirst();
+      }offer();
+    });
+  }
   function nominateIntro(topic) {
+    if(topic[5]==='question'){questionIntro();return;}
     choosePartner(topic[0], other => result('相手が決まりました！',topic[1],
       topic[5] === 'pair' ? `${members[owner].name}と${members[other].name}で乾杯！`
       : topic[5] === 'question' ? `${members[other].name}に質問しよう！`
@@ -515,10 +535,31 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     });
   }
   function freeGameIntro() {
-    screen('好きなゲームを選ぼう',`${members[owner].name}が選択。すべてこの画面で遊べます。`);
+    screen('好きな飲みゲームを選ぼう',`${members[owner].name}が選択。遊びたいゲームを選んでね。`);
     const grid=node('div',undefined,'choice-grid');
-    [['10秒ストップ',timerIntro],['金庫破り',safeIntro],['じゃんけん',rpsIntro],['山手線ゲーム',foodIntro],['好み当て',tasteIntro]].forEach(([name,fn])=>grid.append(button(name,fn,'choice-button')));
+    ['山手線ゲーム','ジャックポット','どすこい','わっしょい','二者択一','これ以外でやりたい飲みゲーム'].forEach(name=>grid.append(button(name,()=>{
+      if(name==='山手線ゲーム'){freeYamanoteIntro();return;}
+      screen(name,name==='これ以外でやりたい飲みゲーム'?'みんなで遊びたいゲームを決めて始めよう。':'みんなでルールを確認して始めよう。');
+      el('event-content').append(node('p','ゲームはみんなで進めて、終わったら盤面に戻ってね。'));
+      el('event-actions').append(button('ゲーム終了・盤面に戻る →',finish),button('ゲームを選び直す',freeGameIntro,'text-button'));
+      focusFirst();
+    },'choice-button')));
     el('event-content').append(grid);focusFirst();
+  }
+  function freeYamanoteIntro(themes=shuffle([...new Set(YAMANOTE_THEMES)]).slice(0,3)) {
+    screen('山手線ゲームのお題を選ぼう','この中から選んでも、好きなお題で遊んでもOK！');
+    const grid=node('div',undefined,'theme-grid');
+    themes.forEach(theme=>grid.append(button(theme,()=>showYamanoteTheme(theme,()=>freeYamanoteIntro(themes)),'choice-button')));
+    grid.append(button('好きなお題で遊ぶ',()=>{
+      screen('好きなお題で遊ぼう','お題を入力するか、口頭で決めて始めよう。');
+      const input=node('input');input.maxLength=150;input.placeholder='例：旅行に持っていきたいもの';input.setAttribute('aria-label','好きなお題');
+      el('event-content').append(input);
+      const start=button('このお題で始める →',()=>showYamanoteTheme(input.value.trim()||'みんなで決めた好きなお題',()=>freeYamanoteIntro(themes)));
+      input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();start.click();}});
+      el('event-actions').append(start,button('テーマ例に戻る',()=>freeYamanoteIntro(themes),'text-button'));focusFirst();
+    },'choice-button'));
+    el('event-content').append(grid);
+    el('event-actions').append(button('ゲームを選び直す',freeGameIntro,'text-button'));focusFirst();
   }
   const YAMANOTE_THEMES = [
     '食べ物', '飲み物', 'コンビニで買えるもの', 'お菓子', '果物',
@@ -529,9 +570,13 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   ];
   function foodIntro() {
     const theme = YAMANOTE_THEMES[Math.floor(Math.random() * YAMANOTE_THEMES.length)];
+    showYamanoteTheme(theme);
+  }
+  function showYamanoteTheme(theme,back) {
     screen('山手線ゲーム', '今回のテーマ');
     el('event-content').append(node('div', theme, 'yamanote-theme'));
     el('event-actions').append(button('ゲーム終了・盤面に戻る →', finish));
+    if(back)el('event-actions').append(button('お題を選び直す',back,'text-button'));
     focusFirst();
   }
   const GESTURE_THEMES = ['映画館でポップコーンをこぼした人','寝坊して急いで準備する人','釣った魚が大きすぎた人','熱いラーメンを食べる人','遊園地で怖がる人'];
@@ -637,11 +682,12 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   // カード・テーマの編集データ。同じブラウザーのlocalStorageへ保存します。
   const STORAGE_KEY = 'nomi-sugoroku-catalog-v1';
   const ACTIONS = {
-    '':'文章のお題',roulette:'名前ルーレット',nominate:'相手を指名',rps:'じゃんけん',numbers:'数字選び',coin:'コイントス',free:'好きなゲームを選択',
+    '':'文章のお題',question:'相手への質問（3候補）',roulette:'名前ルーレット',nominate:'相手を指名',rps:'じゃんけん',numbers:'数字選び',coin:'コイントス',free:'好きなゲームを選択',
     timer:'10秒ストップ',safe:'金庫破り',food:'山手線ゲーム',taste:'相手の好み当て',pairs:'相性二択',
     gesture:'ジェスチャー',drawing:'お絵描き',praise:'ほめ言葉リレー',sync:'以心伝心',story:'誰のエピソード？'
   };
   const POOLS = {
+    question:{label:'相手に聞く質問',data:[...QUESTION_THEMES],min:3,width:1},
     food:{label:'山手線ゲームのテーマ',data:YAMANOTE_THEMES,min:1,width:1},
     taste:{label:'好み当ての質問と二択',data:TASTE_THEMES,min:4,width:3},
     pairs:{label:'相性二択の質問と二択',data:PAIRS,min:3,width:3},
@@ -663,6 +709,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     if(!data.pools||typeof data.pools!=='object')throw Error('テーマのデータがありません。');
     for(const [key,meta] of Object.entries(POOLS)){
       const pool=data.pools[key];
+      if(key==='question'&&pool===undefined)continue; // 旧版の共有データも読み込めるようにする
       if(!Array.isArray(pool)||pool.length<meta.min||pool.length>200)throw Error(`${meta.label}は${meta.min}〜200件必要です。`);
       const titles=[];
       pool.forEach(row=>{
@@ -676,6 +723,12 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     }
   }
   function rouletteTopic(topic){
+    if(topic[4]==='free'&&topic[1]==='引いた人が、アプリ内のゲームから1つ選んで勝負しよう。負けた人が飲む番！'){topic=[...topic];topic[1]='引いた人が、6つの選択肢から好きな飲みゲームを選んで勝負しよう。負けた人が飲む番！';}
+    if(topic[4]==='nominate'&&topic[5]==='question'){
+      const converted=[...topic];converted[4]='question';
+      if(converted[0]==='質問はひとつだけ'){converted[1]='相手を1人選ぶと、ゲームが質問を3つ提示。好きな1つを選んで聞いてみよう！ 候補の入れ替えは3回まで。';converted[2]='対象：選んだ相手／質問はゲームが用意';}
+      return converted;
+    }
     if(topic[3]==='drink'&&(!topic[4]||topic[4]==='nominate')&&/右隣|左隣|隣の人|隣に座/.test(topic.slice(0,3).join(' '))){
       return ['乾杯ルーレット','3人以上なら、引いた人以外の名前ルーレットがスタート。止まった人が飲む番！ 2人ならもう1人。','対象：ルーレットで決まった1人','drink','roulette'];
     }return topic;
@@ -683,7 +736,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   TOPICS.splice(0,TOPICS.length,...TOPICS.map(rouletteTopic));
   function applyCatalog(data){
     TOPICS.splice(0,TOPICS.length,...copy(data.topics).map(rouletteTopic));
-    for(const [key,meta] of Object.entries(POOLS))meta.data.splice(0,meta.data.length,...copy(data.pools[key]));
+    for(const [key,meta] of Object.entries(POOLS))meta.data.splice(0,meta.data.length,...copy(data.pools[key]===undefined&&key==='question'?QUESTION_THEMES:data.pools[key]));
     drinkBag=[];talkBag=[];pairBag=[];
   }
   let storageMessage='';
