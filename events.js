@@ -106,6 +106,8 @@ const EventEngine = (() => {
     serial++; members = players; owner = current; done = callback;
     el('event-label').textContent = 'PICK A CARD / お題マス';
     cards();
+    renderEventDrinks();
+    el('event-dialog').querySelector('.drink-tracker').open=false;
     el('event-dialog').showModal(); focusFirst();
   }
   function cards() {
@@ -126,21 +128,33 @@ const EventEngine = (() => {
     const hand = shuffle([...selectedTopics,...extra]);
     const grid = node('div', undefined, 'card-grid');
     let selected = false;
+    const dealSerial=serial;
+    const motion=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     hand.forEach((topic, i) => {
-      const card = button('', () => {
+      const card = button('', async () => {
         if (selected) return; selected = true;
         Array.from(grid.children).forEach(other => { other.disabled = true; });
-        card.classList.add('revealed');
+        const revealSerial=serial;
+        grid.classList.add('card-picked');card.classList.add('chosen');
+        await new Promise(resolve=>setTimeout(resolve,motion?420:0));
+        if(revealSerial!==serial||!done)return;
+        card.classList.remove('dealing');card.classList.add('revealed');
+        if(typeof GameAudio!=='undefined')GameAudio.play('card');
         card.setAttribute('aria-label', `選んだカード：${topic[0]}`);
         card.replaceChildren(node('span', topic[3] === 'drink' ? '♠' : '♥', 'card-suit'), node('strong', topic[0]), node('span', 'OPEN', 'card-index'));
         // 選んだカードの内容は大きく下に表示。残り5枚は裏向きのまま。
         const detail = node('div', undefined, 'revealed-topic');
         detail.append(node('span', topic[3] === 'drink' ? 'DRINK / 飲む系' : 'TALK / 飲まない系', 'eyebrow'), node('h3', topic[0]), node('p', topic[1]), node('p', topic[2], 'toast-result'));
         el('event-content').append(detail);
+        if(topic[4]==='roulette'){
+          await new Promise(resolve=>setTimeout(resolve,motion?900:0));
+          if(revealSerial!==serial||!done)return;
+          rouletteIntro();return;
+        }
         if (topic[4]) {
           el('event-actions').append(button('このお題を始める →', () => {
             el('event-label').textContent = 'CARD CHALLENGE / お題カードの対決';
-            const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
+            const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), roulette:rouletteIntro, rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
             games[topic[4]](); focusFirst();
           }));
         } else {
@@ -149,11 +163,32 @@ const EventEngine = (() => {
         el('event-actions').querySelector('button').focus({preventScroll:true});
         detail.scrollIntoView({block:'nearest'});
       }, 'playing-card');
+      card.disabled=true;card.classList.add('dealing');card.style.setProperty('--deal-delay',`${i*85}ms`);card.style.setProperty('--deal-x',`${(1-i%3)*95}px`);
       card.setAttribute('aria-label', `裏向きのカード${i + 1}を選ぶ`);
       card.append(node('span', '✦', 'card-corner'), node('span', '♠', 'card-emblem'), node('span', `CARD 0${i + 1}`, 'card-index'));
       grid.append(card);
     });
     el('event-content').append(grid);
+    setTimeout(()=>{if(dealSerial!==serial||!done||selected)return;Array.from(grid.children).forEach(c=>{c.disabled=false;c.classList.remove('dealing');});focusFirst();},motion?900:0);
+  }
+  async function rouletteIntro(){
+    const token=serial,candidates=members.map((_,i)=>i).filter(i=>i!==owner);
+    const chosen=candidates[Math.floor(Math.random()*candidates.length)];
+    screen('乾杯ルーレット',members.length===2?'2人プレイなので、もう1人が対象！':'引いた人以外から、飲む人をルーレットで決定！');
+    const display=node('div',undefined,'name-roulette');display.setAttribute('aria-label','対象を抽選中');el('event-content').append(display);
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(candidates.length>1){
+      for(let turn=0;turn<(reduced?2:18);turn++){
+        const p=members[candidates[turn%candidates.length]];display.textContent=`${p.icon||'♟'} ${p.name}`;
+        if(typeof GameAudio!=='undefined')GameAudio.play('tick',turn);
+        await new Promise(resolve=>setTimeout(resolve,reduced?150:55+turn*turn*.7));
+        if(token!==serial||!done)return;
+      }
+    }
+    const winner=members[chosen];display.textContent=`${winner.icon||'♟'} ${winner.name}`;display.classList.add('roulette-winner');display.setAttribute('aria-label',`対象：${winner.name}`);
+    el('event-description').textContent=`${winner.name}が飲む番！`;
+    if(typeof GameAudio!=='undefined')GameAudio.play('reveal');
+    el('event-actions').append(button(`${winner.name}が飲んだ：＋1杯`,b=>{changeDrinks(chosen,1);b.disabled=true;b.textContent='1杯を記録したよ';},'choice-button'),button('お題おわり！ →',finish));focusFirst();
   }
   function participantOrder() {
     // ゴールした人もイベントには参加し、待ち時間を減らします。
@@ -602,7 +637,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   // カード・テーマの編集データ。同じブラウザーのlocalStorageへ保存します。
   const STORAGE_KEY = 'nomi-sugoroku-catalog-v1';
   const ACTIONS = {
-    '':'文章のお題',nominate:'相手を指名',rps:'じゃんけん',numbers:'数字選び',coin:'コイントス',free:'好きなゲームを選択',
+    '':'文章のお題',roulette:'名前ルーレット',nominate:'相手を指名',rps:'じゃんけん',numbers:'数字選び',coin:'コイントス',free:'好きなゲームを選択',
     timer:'10秒ストップ',safe:'金庫破り',food:'山手線ゲーム',taste:'相手の好み当て',pairs:'相性二択',
     gesture:'ジェスチャー',drawing:'お絵描き',praise:'ほめ言葉リレー',sync:'以心伝心',story:'誰のエピソード？'
   };
@@ -640,8 +675,14 @@ ${t[1]} ／ ${t[2]}`,theme=>{
       if(new Set(titles).size!==titles.length)throw Error(`${meta.label}に同じ内容が重複しています。`);
     }
   }
+  function rouletteTopic(topic){
+    if(topic[3]==='drink'&&(!topic[4]||topic[4]==='nominate')&&/右隣|左隣|隣の人|隣に座/.test(topic.slice(0,3).join(' '))){
+      return ['乾杯ルーレット','3人以上なら、引いた人以外の名前ルーレットがスタート。止まった人が飲む番！ 2人ならもう1人。','対象：ルーレットで決まった1人','drink','roulette'];
+    }return topic;
+  }
+  TOPICS.splice(0,TOPICS.length,...TOPICS.map(rouletteTopic));
   function applyCatalog(data){
-    TOPICS.splice(0,TOPICS.length,...copy(data.topics));
+    TOPICS.splice(0,TOPICS.length,...copy(data.topics).map(rouletteTopic));
     for(const [key,meta] of Object.entries(POOLS))meta.data.splice(0,meta.data.length,...copy(data.pools[key]));
     drinkBag=[];talkBag=[];pairBag=[];
   }
