@@ -47,6 +47,11 @@ function start(names) {
   $('setup').hidden = true;
   $('game').hidden = false;
   $('results').hidden = true;
+  document.body.classList.add('is-playing');
+  document.body.classList.remove('is-finished');
+  $('game-settings').open = false;
+  $('players').dataset.active = '';
+  window.scrollTo(0,0);
   buildBoard();
   setDice(1);
   $('dice-caption').textContent='LUCK IS ROLLING';
@@ -94,9 +99,11 @@ function render() {
   const tokens=cell.querySelector('.tokens');tokens.replaceChildren();
   players.forEach((player,i)=>{if(player.position!==position)return;const token=document.createElement('span');token.className='token'+(i===current&&phase==='rolling'?' hopping':'');token.style.setProperty('--player-color',player.color);token.textContent=player.icon;token.dataset.playerNumber=i+1;token.title=player.name;token.setAttribute('aria-label',player.name);tokens.append(token);});
  });
+  const playerScroll = $('players').scrollLeft;
   $('players').replaceChildren();
   players.forEach((player, i) => {
     const li = document.createElement('li');
+    li.classList.toggle('active-player', i === current && phase !== 'finished');
     const dot = document.createElement('span');
     dot.className = 'dot';
     dot.style.setProperty('--player-color', player.color);
@@ -110,6 +117,15 @@ function render() {
     li.append(dot, name, place, drinkControl(i));
     $('players').append(li);
   });
+  $('players').scrollLeft = playerScroll;
+  if ($('players').dataset.active !== String(current)) {
+    $('players').dataset.active = String(current);
+    if (window.matchMedia('(max-width:600px)').matches) {
+      const item = $('players').children[current];
+      if (item) $('players').scrollLeft += item.getBoundingClientRect().left - $('players').getBoundingClientRect().left;
+    }
+  }
+  document.body.classList.toggle('is-finished', phase === 'finished');
   $('turn').textContent = phase === 'finished' ? 'ゲーム終了' : `${players[current].name}の番`;
   $('roll').hidden = phase === 'landed' || phase === 'event' || phase === 'finished';
   $('roll').disabled = !['ready','charging'].includes(phase);
@@ -265,9 +281,16 @@ $('reset').addEventListener('click', () => {
   cancelCharge();closeCelebration();
   EventEngine.reset();
   phase = 'setup';
+  document.body.classList.remove('is-playing','is-finished');
   $('game').hidden = true;
   $('setup').hidden = false;
   $('catalog-open').disabled = false;
 });
 $('again').addEventListener('click', () => start(players.map(player => player.name)));
 renderNameInputs();
+
+// Reserve the actual dock height, including wrapped names and safe-area padding.
+const mobileControls = document.querySelector('.controls');
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--controls-height', `${mobileControls.getBoundingClientRect().height}px`);
+}).observe(mobileControls);

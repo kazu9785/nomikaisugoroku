@@ -1,21 +1,22 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>飲みすごろく</title><link rel="stylesheet" href="style.css?v=party-3">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>飲みすごろく</title><link rel="stylesheet" href="style.css?v=mobile-ui-1">
 <script src="config.js" defer></script>
   <script src="questions.js" defer></script>
 <script src="events.js?v=game-menu-1" defer></script>
 <script src="audio.js?v=mobile-audio-2" defer></script>
-<script src="game.js" defer></script>
+<script src="game.js?v=mobile-ui-1" defer></script>
 <script src="shared.js" defer></script>
 <script src="catalog.js" defer></script>
 </head>
 <body>
 <header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>飲み<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><div class="header-badge">NEON NIGHT</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
 <main>
-<div class="sound-bar"><button id="sound-toggle" class="text-button" type="button" aria-pressed="true">♪ 音 ON</button><button id="bgm-toggle" class="text-button" type="button" aria-pressed="false">BGM OFF</button><button id="sound-test" class="text-button" type="button">音を再開・テスト</button><label for="sound-volume">音量</label><input id="sound-volume" type="range" min="0" max="100" value="35" aria-label="音量"><span id="audio-status" class="audio-status" role="status"></span></div>
+<details id="game-settings" class="game-settings"><summary>音・共有設定</summary><div class="settings-content"><div class="sound-bar"><button id="sound-toggle" class="text-button" type="button" aria-pressed="true">♪ 音 ON</button><button id="bgm-toggle" class="text-button" type="button" aria-pressed="false">BGM OFF</button><button id="sound-test" class="text-button" type="button">音を再開・テスト</button><label for="sound-volume">音量</label><input id="sound-volume" type="range" min="0" max="100" value="35" aria-label="音量"><span id="audio-status" class="audio-status" role="status"></span></div>
 <div class="sync-strip"><span id="sync-status" role="status">共有データを読み込み中…</span><button id="legacy-export" class="text-button" type="button" hidden>以前の編集をファイルに保存</button><button id="sync-refresh" class="text-button" type="button">共有データを更新</button></div>
+</div></details>
 <section id="setup" class="panel setup">
 <div class="setup-icon" aria-hidden="true">⚄</div><span class="eyebrow">LET'S PLAY</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
 <form id="setup-form"><label for="count">遊ぶ人数</label><select id="count"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option></select>
@@ -25,7 +26,7 @@
 <section id="game" hidden>
 <div class="game-top"><h2>ゴールを目指そう！</h2><button id="reset" class="text-button">最初から</button></div>
 <div class="layout"><div class="panel board-panel"><div class="legend"><span>NEON SPIRAL</span><span>30 STEPS / EXACT FINISH</span></div><div class="tile-legend"><span>♥ 全マスお題カード</span><span id="topic-total">全31種類 · 6枚から選ぼう</span></div><div id="board" aria-label="すごろくの盤面"></div></div>
-<aside><div class="panel controls"><span class="eyebrow">YOUR TURN</span><h2 id="turn"></h2><div class="dice-stage"><div class="dice-orbit" aria-hidden="true"></div><div id="dice" aria-label="サイコロ">⚀</div><span id="dice-caption">LUCK IS ROLLING</span></div><p id="message" role="status" aria-live="polite"></p><div id="power-panel"><div class="power-label"><span>ROLL POWER</span><output id="power-value">0%</output></div><div id="power-meter" role="meter" aria-label="サイコロのパワー" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power-fill"></span></div><small>長押しして、離すと投げる</small></div><button id="roll" class="primary">長押しでサイコロを振る</button><button id="next" class="primary" hidden>次のプレイヤーへ →</button></div><div class="panel"><h3>プレイヤー</h3><ol id="players"></ol></div></aside></div>
+<aside><div class="panel controls"><span class="eyebrow">YOUR TURN</span><h2 id="turn"></h2><div class="dice-stage"><div class="dice-orbit" aria-hidden="true"></div><div id="dice" aria-label="サイコロ">⚀</div><span id="dice-caption">LUCK IS ROLLING</span></div><p id="message" role="status" aria-live="polite"></p><div id="power-panel"><div class="power-label"><span>ROLL POWER</span><output id="power-value">0%</output></div><div id="power-meter" role="meter" aria-label="サイコロのパワー" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power-fill"></span></div><small>長押しして、離すと投げる</small></div><button id="roll" class="primary">長押しでサイコロを振る</button><button id="next" class="primary" hidden>次のプレイヤーへ →</button></div><div class="panel players-panel"><h3>プレイヤー・杯数 <small>横にスワイプ →</small></h3><ol id="players"></ol></div></aside></div>
 <div id="results" class="panel results" hidden><span class="eyebrow">FINISH!</span><h2>みんなゴール！</h2><ol id="ranking"></ol><button id="again" class="primary">同じメンバーでもう一度</button></div>
 </section>
 </main>

@@ -64,3 +64,48 @@ button.catalog-card{text-align:left;color:var(--text);font-weight:400;display:fl
 @media(prefers-reduced-motion:reduce){.playing-card,.roulette-winner,#confetti i{animation:none!important}.playing-card{transition:none!important}#confetti{display:none}}
 
 .audio-status{flex-basis:100%;font-size:11px;color:var(--muted);line-height:1.6}.sound-bar #sound-test{color:#e7d0ff;border-color:#ad77ff66}
+
+/* MOBILE PLAY: thumb controls, compact board, readable cards */
+.game-settings{margin-bottom:18px;border:1px solid #8994c132;border-radius:14px;background:#141a3099}
+.game-settings>summary{cursor:pointer;min-height:48px;padding:14px 16px;color:#d3c6ed;font-size:14px;font-weight:700}
+.settings-content{padding:4px 16px 16px}.settings-content .sync-strip{margin-bottom:0}
+.players-panel h3 small{display:none}
+#players .active-player{background:#57e5fa0b;border-color:#57e5fa77}
+button,input,select,textarea,summary{-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation}
+[hidden]{display:none!important}
+@media(max-width:600px){
+  html{scroll-padding-bottom:calc(var(--controls-height,200px) + 20px)}
+  main{padding:0 12px}header{padding:16px 16px 12px;gap:8px;flex-wrap:nowrap}header h1{font-size:25px;letter-spacing:0;margin:0}header p,header .eyebrow,.header-badge{display:none}.header-tools{width:auto;flex-shrink:0}.header-tools #catalog-open{font-size:12px;min-height:44px;padding:9px}
+  .game-settings{margin-bottom:12px}.settings-content .sound-bar button{font-size:14px;min-height:44px}.sound-bar label{font-size:14px}.sound-bar input{flex:1;min-width:100px;min-height:44px}.audio-status{font-size:12px}.sync-strip{font-size:14px}.sync-strip button{min-height:44px;font-size:14px;white-space:normal}
+  input,select,textarea,.theme-edit-row input{font-size:16px}.text-button{min-height:44px;font-size:14px}
+  .setup{padding:22px 18px;margin-top:0}.setup-icon{margin-bottom:14px}.setup-intro{font-size:16px}.setup .note{font-size:13px}.setup label{font-size:14px}
+  body.is-playing:not(.is-finished) main{padding-bottom:calc(var(--controls-height,200px) + 18px)}
+  body.is-playing footer{display:none}.game-top{margin:0 0 10px;gap:8px}.game-top h2{font-size:16px}.game-top #reset{min-height:44px}
+  .layout{gap:12px}.layout>aside>.players-panel{order:-1;padding:12px;overflow:hidden;border-radius:16px}
+  .players-panel h3{font-size:14px;display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;letter-spacing:0}.players-panel h3 small{display:inline;color:var(--muted);font-size:12px;font-weight:400}
+  #players{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;margin:0;padding:0 0 4px;scrollbar-width:thin;scrollbar-color:#8064a2 transparent}
+  #players li{flex:0 0 180px;display:grid;grid-template-columns:28px minmax(0,1fr);gap:6px 8px;align-items:center;margin:0;padding:10px;border:1px solid #8994c13d;border-radius:12px;scroll-snap-align:start}
+  #players .player-name{font-size:14px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  #players .place{grid-column:2;font-size:12px;margin:0}.drink-control button{min-width:44px;min-height:44px}
+  #players .drink-control{grid-column:1 / -1;justify-content:space-between;margin:0;gap:4px}#players .drink-control output{font-size:16px}
+  .board-panel{padding:12px 6px;border-radius:18px}.legend{display:none}.tile-legend{font-size:12px;margin:0 6px 8px;flex-wrap:wrap;gap:4px}
+  #board{grid-template-rows:repeat(9,62px)}#board .cell{margin:5px 3px;padding:5px 4px;border-radius:13px 7px 13px 7px;border-bottom-width:2px}
+  #board .cell-label{font-size:12px;letter-spacing:0}#board .direction{font-size:10px}
+  #board .tokens{position:absolute;bottom:4px;left:4px;right:4px;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0}#board .token{width:15px;height:18px;font-size:12px;max-width:100%}.token:after{bottom:-2px;right:-2px}
+  .board-hub{gap:12px}.board-hub strong{font-size:26px;letter-spacing:3px}.board-hub small{font-size:10px;letter-spacing:0}.board-hub>span:last-child{font-size:12px}.hub-orbit{width:60px;height:60px;font-size:32px}
+  .controls{position:fixed;left:0;right:0;bottom:0;z-index:20;width:auto;margin:0;border-radius:22px 22px 0 0;border:1px solid #ae77ff65;border-bottom:0;padding:12px max(14px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));grid-template-columns:76px minmax(0,1fr);gap:4px 14px;background:linear-gradient(120deg,#22213c,#121a30);box-shadow:0 -10px 35px #03071499}
+  .controls>.eyebrow{display:none}.controls #turn{grid-row:1;grid-column:2;font-size:17px;line-height:1.4;margin:0;overflow-wrap:anywhere}.controls #message{grid-row:2;grid-column:2;font-size:14px;line-height:1.4;margin:0;min-height:20px;overflow-wrap:anywhere}
+  .controls .dice-stage{grid-row:1 / 4;grid-column:1;min-height:84px;padding:8px 0 12px;align-self:center}.dice-orbit{width:74px;height:74px}.controls #dice{width:58px;height:58px;padding:9px;gap:5px;border-radius:14px}.controls #dice-caption{display:none}
+  .controls #power-panel{grid-row:3;grid-column:2;margin:2px 0 4px}.power-label{font-size:12px;margin-bottom:4px;letter-spacing:0}.controls #power-panel small{display:none}#power-meter{height:8px}
+  .controls #roll,.controls #next{grid-row:4;grid-column:1 / -1;min-height:52px;font-size:16px;margin:0;padding:12px;line-height:1.4;border-radius:14px}
+  body.is-finished .controls{display:none}
+  #event-dialog,#catalog-dialog{width:calc(100% - 16px);max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:16px;border-radius:20px;overscroll-behavior:contain;scroll-padding:12px}
+  #event-title,#catalog-title{font-size:22px;margin:12px 0;line-height:1.5;overflow-wrap:anywhere}.event-top .eyebrow{font-size:12px;letter-spacing:1px}.event-description{font-size:16px;line-height:1.6;margin:8px 0 16px}
+  .card-grid{gap:8px}.playing-card{min-height:112px;padding:10px 4px}.card-emblem{font-size:32px}.card-index{font-size:12px;letter-spacing:0}
+  .choice-grid{gap:10px}.choice-button{min-height:64px;font-size:16px;padding:14px 10px;line-height:1.5}.theme-grid .choice-button{min-height:60px;padding:16px}.revealed-topic{padding:16px}.revealed-topic p,.topic-target{font-size:16px!important}
+  #event-actions .primary{min-height:52px;font-size:16px;margin-top:12px}#event-actions>.text-button{min-height:48px}.drink-tracker{margin-top:18px}.drink-tracker summary{min-height:44px;font-size:16px}.event-drink-row{font-size:16px;gap:8px}
+  .single-theme{font-size:22px;line-height:1.7;padding:22px 12px}.story-quote{font-size:18px;padding:18px}.yamanote-theme{font-size:28px;padding:24px 12px}
+}
+@media(max-width:360px){#players li{flex-basis:166px}#board .direction{display:none}#board .token{width:13px;font-size:10px}.controls{column-gap:10px}}
+@media(max-width:600px) and (max-height:500px){.controls{position:static;margin-top:0;border-radius:18px;order:-2}body.is-playing:not(.is-finished) main{padding-bottom:16px}}
