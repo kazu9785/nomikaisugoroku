@@ -2,14 +2,22 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>飲みすごろく</title><link rel="stylesheet" href="style.css?v=mobile-ui-1">
+<title>飲みすごろく</title><link rel="stylesheet" href="style.css?v=pwa-recent-1">
 <script src="config.js" defer></script>
   <script src="questions.js" defer></script>
-<script src="events.js?v=game-menu-1" defer></script>
+<script src="recent.js?v=pwa-recent-1" defer></script>
+<script src="pwa.js?v=pwa-recent-1" defer></script>
+<script src="events.js?v=pwa-recent-1" defer></script>
 <script src="audio.js?v=mobile-audio-2" defer></script>
-<script src="game.js?v=mobile-ui-1" defer></script>
+<script src="game.js?v=pwa-recent-1" defer></script>
 <script src="shared.js" defer></script>
-<script src="catalog.js" defer></script>
+<script src="catalog.js?v=backup-preview-1" defer></script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<meta name="theme-color" content="#101225">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="飲みすごろく">
 </head>
 <body>
 <header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>飲み<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><div class="header-badge">NEON NIGHT</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
@@ -17,6 +25,8 @@
 <details id="game-settings" class="game-settings"><summary>音・共有設定</summary><div class="settings-content"><div class="sound-bar"><button id="sound-toggle" class="text-button" type="button" aria-pressed="true">♪ 音 ON</button><button id="bgm-toggle" class="text-button" type="button" aria-pressed="false">BGM OFF</button><button id="sound-test" class="text-button" type="button">音を再開・テスト</button><label for="sound-volume">音量</label><input id="sound-volume" type="range" min="0" max="100" value="35" aria-label="音量"><span id="audio-status" class="audio-status" role="status"></span></div>
 <div class="sync-strip"><span id="sync-status" role="status">共有データを読み込み中…</span><button id="legacy-export" class="text-button" type="button" hidden>以前の編集をファイルに保存</button><button id="sync-refresh" class="text-button" type="button">共有データを更新</button></div>
 </div></details>
+<details id="install-panel" class="game-settings"><summary>ホーム画面に追加</summary><div class="settings-content"><p id="install-help" class="note"></p><button id="install-app" class="text-button" type="button" hidden>アプリを追加</button><p class="note">ホーム画面のアイコンから起動できます。起動にはインターネット接続が必要です。</p></div></details>
+<section id="resume-panel" class="panel" hidden><h2>前回の続きから遊ぶ？</h2><p id="resume-info"></p><button id="resume-game" class="primary">続きから再開 →</button><button id="discard-game" class="text-button">前回の記録を削除</button><p class="note">この端末・このURLに保存したゲームです。お題の途中は同じカードの最初から再開します。</p></section>
 <section id="setup" class="panel setup">
 <div class="setup-icon" aria-hidden="true">⚄</div><span class="eyebrow">LET'S PLAY</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
 <form id="setup-form"><label for="count">遊ぶ人数</label><select id="count"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option></select>
@@ -24,7 +34,7 @@
 <p class="note">STARTから30マス先のGOALへ。ぴったり到着でゴール！ 余った目は折り返します。</p>
 </section>
 <section id="game" hidden>
-<div class="game-top"><h2>ゴールを目指そう！</h2><button id="reset" class="text-button">最初から</button></div>
+<p id="save-status" class="note" role="status"></p><div class="game-top"><h2>ゴールを目指そう！</h2><div class="game-tools"><button id="pause-game" class="text-button">中断</button><button id="reset" class="text-button">最初から</button></div></div>
 <div class="layout"><div class="panel board-panel"><div class="legend"><span>NEON SPIRAL</span><span>30 STEPS / EXACT FINISH</span></div><div class="tile-legend"><span>♥ 全マスお題カード</span><span id="topic-total">全31種類 · 6枚から選ぼう</span></div><div id="board" aria-label="すごろくの盤面"></div></div>
 <aside><div class="panel controls"><span class="eyebrow">YOUR TURN</span><h2 id="turn"></h2><div class="dice-stage"><div class="dice-orbit" aria-hidden="true"></div><div id="dice" aria-label="サイコロ">⚀</div><span id="dice-caption">LUCK IS ROLLING</span></div><p id="message" role="status" aria-live="polite"></p><div id="power-panel"><div class="power-label"><span>ROLL POWER</span><output id="power-value">0%</output></div><div id="power-meter" role="meter" aria-label="サイコロのパワー" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="power-fill"></span></div><small>長押しして、離すと投げる</small></div><button id="roll" class="primary">長押しでサイコロを振る</button><button id="next" class="primary" hidden>次のプレイヤーへ →</button></div><div class="panel players-panel"><h3>プレイヤー・杯数 <small>横にスワイプ →</small></h3><ol id="players"></ol></div></aside></div>
 <div id="results" class="panel results" hidden><span class="eyebrow">FINISH!</span><h2>みんなゴール！</h2><ol id="ranking"></ol><button id="again" class="primary">同じメンバーでもう一度</button></div>
@@ -48,7 +58,8 @@
   </form>
   <section id="catalog-unlocked" hidden>
     <div id="catalog-list-view">
-      <div class="catalog-toolbar"><button id="catalog-add" class="text-button" type="button">＋ カードを追加</button><label class="text-button import-label">以前のお題を取り込む<input id="catalog-import" type="file" accept=".json,application/json"></label></div>
+      <div class="catalog-toolbar"><button id="catalog-add" class="text-button" type="button">＋ カードを追加</button><label class="text-button import-label">JSONから復元<input id="catalog-import" type="file" accept=".json,application/json"></label></div>
+      <details id="backup-tools"><summary>バックアップ・お題セット</summary><p class="note">カードとテーマをまとめて保存。名前付きセットと変更前の履歴は、この端末・このURLに保存します。</p><button id="catalog-export" class="text-button" type="button">共有中のお題をJSONで保存</button><label for="backup-name">セット名</label><input id="backup-name" maxlength="40" placeholder="例：いつものメンバー用"><button id="backup-save" class="text-button" type="button">今のお題をセットとして保存</button><div id="backup-list"></div><p id="backup-status" role="status"></p></details><section id="restore-review" class="panel" hidden><h3>復元する内容の確認</h3><p id="restore-summary"></p><ul id="restore-titles"></ul><button id="restore-apply" class="primary" type="button">この内容を全端末の共有お題に反映</button><button id="restore-cancel" class="text-button" type="button">キャンセル</button></section>
       <label for="catalog-filter">表示するカード</label>
       <select id="catalog-filter"><option value="all">すべて</option><option value="drink">飲む系</option><option value="talk">飲まない系</option></select>
       <p id="catalog-count" class="note" role="status"></p>
@@ -59,5 +70,6 @@
   </section>
 </dialog>
 <dialog id="goal-dialog" aria-labelledby="goal-title"><div id="confetti" aria-hidden="true"></div><span class="eyebrow">CONGRATULATIONS</span><div id="goal-avatar" aria-hidden="true"></div><h2 id="goal-title"></h2><p id="goal-person"></p><div id="goal-drinks"></div><button id="goal-continue" class="primary">続ける →</button></dialog>
+<div id="turn-banner" role="status" aria-live="polite" hidden><span id="turn-avatar" aria-hidden="true"></span><div><small>端末を渡してね</small><strong id="turn-announcement"></strong></div></div>
 <footer>飲みすごろく · NEON NIGHT</footer>
 </body></html>

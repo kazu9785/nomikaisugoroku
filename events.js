@@ -45,6 +45,8 @@ const EventEngine = (() => {
   ];
   let members = [], owner = 0, done = null, serial = 0;
   let drinkBag = [], talkBag = [], pairBag = [];
+  let checkpoint=null, previewing=false;
+  const checkpointChanged=()=>{if(!previewing&&typeof saveGame==='function')saveGame();};
   const el = id => document.getElementById(id);
   const shuffle = values => {
     const array = [...values];
@@ -54,6 +56,8 @@ const EventEngine = (() => {
     }
     return array;
   };
+  function recentDraw(group,values,count){return previewing?shuffle(values).slice(0,count):RecentTopics.draw(group,values,count);}
+  function themeGroup(pool){return 'theme-'+(Object.entries(POOLS).find(([,v])=>v.data===pool)?.[0]||'other');}
   function tileType(position) {
     if (position === 0 || position === 30) return 'special';
     return 'card';
@@ -84,12 +88,12 @@ const EventEngine = (() => {
   function finish() {
     if (!done) return;
     stopClock();
-    const callback = done; done = null; serial++;
+    const callback = done; done = null; serial++; checkpoint=null;
     el('event-dialog').close(); callback();
   }
   function reset() {
     stopClock();
-    serial++; done = null; drinkBag = []; talkBag = []; pairBag = [];
+    serial++; done = null; checkpoint=null; drinkBag = []; talkBag = []; pairBag = [];
     if (el('event-dialog').open) el('event-dialog').close();
   }
   function result(title, description, toast, details = []) {
@@ -102,30 +106,61 @@ const EventEngine = (() => {
     el('event-content').append(node('p', toast, 'toast-result'));
     el('event-actions').append(button('終了して盤面に戻る →', finish)); focusFirst();
   }
-  function open(type, players, current, callback) {
-    serial++; members = players; owner = current; done = callback;
-    el('event-label').textContent = 'PICK A CARD / お題マス';
-    cards();
+  function open(type, players, current, callback, saved=null) {
+    serial++; members = players; owner = current; done = callback; previewing=false;
+    checkpoint=saved ? JSON.parse(JSON.stringify(saved)) : null;
+    el('event-label').textContent = saved?'RESUME / 前回のお題':'PICK A CARD / お題マス';
+    el('event-skip').textContent='パス';
+    el('event-dialog').querySelector('.drink-tracker').hidden=false;
+    if(checkpoint&&checkpoint.selected!==null){
+      screen('前回のお題から再開','対決は最初から。記録済みの杯数はそのままです。');
+      showTopic(checkpoint.hand[checkpoint.selected]);
+    }else cards();
     renderEventDrinks();
     el('event-dialog').querySelector('.drink-tracker').open=false;
     el('event-dialog').showModal(); focusFirst();
   }
+  function runTopic(topic){
+    const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), roulette:rouletteIntro, question:questionIntro, rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
+    games[topic[4]]();focusFirst();
+  }
+  async function showTopic(topic){
+    const revealSerial=serial,motion=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const detail = node('div', undefined, 'revealed-topic');
+    detail.append(node('span', topic[3] === 'drink' ? 'DRINK / 飲む系' : 'TALK / 飲まない系', 'eyebrow'), node('h3', topic[0]), node('p', topic[1]), node('p', topic[2], 'toast-result'));
+    el('event-content').append(detail);
+    if(topic[4]==='roulette'){
+      await new Promise(resolve=>setTimeout(resolve,motion?900:0));
+      if(revealSerial!==serial||!done)return;
+      rouletteIntro();return;
+    }
+    el('event-actions').append(button(topic[4]?'このお題を始める →':'お題おわり！ →',topic[4]?()=>runTopic(topic):finish));
+    el('event-actions').querySelector('button').focus({preventScroll:true});
+    detail.scrollIntoView({block:'nearest'});
+  }
+  function preview(data, index, count, callback){
+    if(done)throw Error('今のお題が終わってから試してください。');
+    validateCatalog(data);
+    const original=snapshot();
+    applyCatalog(data);previewing=true;checkpoint=null;serial++;
+    members=Array.from({length:count},(_,i)=>({name:`お試し${i+1}`,icon:['♟','🐈','👑','🚀'][i],drinks:0}));owner=0;
+    done=()=>{previewing=false;applyCatalog(original);el('event-dialog').querySelector('.drink-tracker').hidden=false;callback();};
+    el('event-label').textContent='TEST PLAY / 本番の記録は変わりません';el('event-skip').textContent='お試しを終了';
+    el('event-dialog').querySelector('.drink-tracker').hidden=true;
+    screen('カードのお試し',`${count}人で確認中。編集内容はまだ保存されません。`);
+    el('event-dialog').showModal();showTopic(TOPICS[index]);focusFirst();
+  }
   function cards() {
     screen(`${members[owner].name}、1枚選んで！`, '裏向きカードから、気になる1枚をタップ。何が出るかは開いてからのお楽しみ。');
     // 毎回、飲む系3枚＋飲まない系3枚を混ぜる。裏面は全て同じ。
-    function draw(kind, count) {
-      const bag = kind === 'drink' ? drinkBag : talkBag;
-      const picked = [];
-      const available = TOPICS.filter(t=>t[3]===kind);
-      while (picked.length < Math.min(count,available.length)) {
-        if (!bag.length) bag.push(...shuffle(TOPICS.filter(t => t[3] === kind && !picked.includes(t))));
-        picked.push(bag.pop());
-      }
-      return picked;
+    function draw(kind,count){return recentDraw('cards',TOPICS.filter(t=>t[3]===kind),count);}
+    let hand=checkpoint?.hand;
+    if(!hand){
+      const selectedTopics=[...draw('drink',3),...draw('talk',3)];
+      const extra=recentDraw('cards',TOPICS.filter(t=>!selectedTopics.includes(t)),6-selectedTopics.length);
+      hand=shuffle([...selectedTopics,...extra]);
     }
-    const selectedTopics = [...draw('drink', 3), ...draw('talk', 3)];
-    const extra = shuffle(TOPICS.filter(t=>!selectedTopics.includes(t))).slice(0,6-selectedTopics.length);
-    const hand = shuffle([...selectedTopics,...extra]);
+    checkpoint={hand,selected:null,roulette:null,rouletteRecorded:false};checkpointChanged();
     const grid = node('div', undefined, 'card-grid');
     let selected = false;
     const dealSerial=serial;
@@ -133,6 +168,8 @@ const EventEngine = (() => {
     hand.forEach((topic, i) => {
       const card = button('', async () => {
         if (selected) return; selected = true;
+        checkpoint.selected=i;if(!previewing)RecentTopics.remember('cards',[topic]);checkpointChanged();
+        try{navigator.vibrate?.(18);}catch{}
         Array.from(grid.children).forEach(other => { other.disabled = true; });
         const revealSerial=serial;
         grid.classList.add('card-picked');card.classList.add('chosen');
@@ -142,38 +179,24 @@ const EventEngine = (() => {
         if(typeof GameAudio!=='undefined')GameAudio.play('card');
         card.setAttribute('aria-label', `選んだカード：${topic[0]}`);
         card.replaceChildren(node('span', topic[3] === 'drink' ? '♠' : '♥', 'card-suit'), node('strong', topic[0]), node('span', 'OPEN', 'card-index'));
-        // 選んだカードの内容は大きく下に表示。残り5枚は裏向きのまま。
-        const detail = node('div', undefined, 'revealed-topic');
-        detail.append(node('span', topic[3] === 'drink' ? 'DRINK / 飲む系' : 'TALK / 飲まない系', 'eyebrow'), node('h3', topic[0]), node('p', topic[1]), node('p', topic[2], 'toast-result'));
-        el('event-content').append(detail);
-        if(topic[4]==='roulette'){
-          await new Promise(resolve=>setTimeout(resolve,motion?900:0));
-          if(revealSerial!==serial||!done)return;
-          rouletteIntro();return;
-        }
-        if (topic[4]) {
-          el('event-actions').append(button('このお題を始める →', () => {
-            el('event-label').textContent = 'CARD CHALLENGE / お題カードの対決';
-            const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), roulette:rouletteIntro, question:questionIntro, rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
-            games[topic[4]](); focusFirst();
-          }));
-        } else {
-          el('event-actions').append(button('お題おわり！ →', finish));
-        }
-        el('event-actions').querySelector('button').focus({preventScroll:true});
-        detail.scrollIntoView({block:'nearest'});
+        showTopic(topic);
       }, 'playing-card');
-      card.disabled=true;card.classList.add('dealing');card.style.setProperty('--deal-delay',`${i*85}ms`);card.style.setProperty('--deal-x',`${(1-i%3)*95}px`);
+      card.disabled=true;card.classList.add('dealing');card.style.setProperty('--deal-delay',`${(motion?750:0)+i*85}ms`);card.style.setProperty('--deal-x',`${(1-i%3)*95}px`);
       card.setAttribute('aria-label', `裏向きのカード${i + 1}を選ぶ`);
       card.append(node('span', '✦', 'card-corner'), node('span', '♠', 'card-emblem'), node('span', `CARD 0${i + 1}`, 'card-index'));
       grid.append(card);
     });
+    const stack=node('div',undefined,'shuffle-stack');stack.setAttribute('aria-hidden','true');
+    for(let i=0;i<3;i++)stack.append(node('span','♠'));
+    if(motion){grid.style.visibility='hidden';el('event-content').append(stack);
+      setTimeout(()=>{if(dealSerial!==serial||!done)return;stack.remove();grid.style.visibility='';},750);}
     el('event-content').append(grid);
-    setTimeout(()=>{if(dealSerial!==serial||!done||selected)return;Array.from(grid.children).forEach(c=>{c.disabled=false;c.classList.remove('dealing');});focusFirst();},motion?900:0);
+    setTimeout(()=>{if(dealSerial!==serial||!done||selected)return;Array.from(grid.children).forEach(c=>{c.disabled=false;c.classList.remove('dealing');});focusFirst();},motion?1650:0);
   }
   async function rouletteIntro(){
     const token=serial,candidates=members.map((_,i)=>i).filter(i=>i!==owner);
-    const chosen=candidates[Math.floor(Math.random()*candidates.length)];
+    const chosen=candidates.includes(checkpoint?.roulette)?checkpoint.roulette:candidates[Math.floor(Math.random()*candidates.length)];
+    if(checkpoint){checkpoint.roulette=chosen;checkpointChanged();}
     screen('乾杯ルーレット',members.length===2?'2人プレイなので、もう1人が対象！':'引いた人以外から、飲む人をルーレットで決定！');
     const display=node('div',undefined,'name-roulette');display.setAttribute('aria-label','対象を抽選中');el('event-content').append(display);
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -188,7 +211,12 @@ const EventEngine = (() => {
     const winner=members[chosen];display.textContent=`${winner.icon||'♟'} ${winner.name}`;display.classList.add('roulette-winner');display.setAttribute('aria-label',`対象：${winner.name}`);
     el('event-description').textContent=`${winner.name}が飲む番！`;
     if(typeof GameAudio!=='undefined')GameAudio.play('reveal');
-    el('event-actions').append(button(`${winner.name}が飲んだ：＋1杯`,b=>{changeDrinks(chosen,1);b.disabled=true;b.textContent='1杯を記録したよ';},'choice-button'),button('お題おわり！ →',finish));focusFirst();
+    const record=button(`${winner.name}が飲んだ：＋1杯`,b=>{
+      if(previewing){members[chosen].drinks++;}else{if(checkpoint)checkpoint.rouletteRecorded=true;changeDrinks(chosen,1);}
+      b.disabled=true;b.textContent=previewing?'お試しで1杯を記録':'1杯を記録したよ';
+    },'choice-button');
+    if(checkpoint?.rouletteRecorded){record.disabled=true;record.textContent='1杯を記録済み';}
+    el('event-actions').append(record,button('お題おわり！ →',finish));focusFirst();
   }
   function participantOrder() {
     // ゴールした人もイベントには参加し、待ち時間を減らします。
@@ -228,7 +256,7 @@ const EventEngine = (() => {
     screen('相性二択チャレンジ', `${members[owner].name}と、相手ひとりが挑戦。3問にこっそり回答して、どれだけ一致するか答え合わせ！ 相手を選んでね。`);
     const grid = node('div', undefined, 'choice-grid');
     members.forEach((p,i)=>{if(i!==owner)grid.append(button(p.name,()=>{
-      if(pairBag.length<3) pairBag=shuffle(PAIRS);
+      pairBag=recentDraw('theme-pairs',PAIRS,3);
       pairHandoff([owner,i],pairBag.splice(0,3),[[],[]],0);
     },'choice-button'));});
     el('event-content').append(grid);
@@ -287,7 +315,7 @@ const EventEngine = (() => {
       ? '2人用「本当？ 作り話？」。カードを引いた人が話を入力し、相手が本当か作り話かを当てます。'
       : '3〜4人用「誰のエピソード？」。全員が同じテーマで秘密の話を入力。ランダムな1件について、誰の話か当てます。');
     const grid = node('div', undefined, 'theme-grid'); let selected = false;
-    shuffle(STORY_THEMES).slice(0, 3).forEach(theme => {
+    recentDraw('theme-story',STORY_THEMES,3).forEach(theme => {
       grid.append(button(theme, () => {
         if (selected) return; selected = true;
         const state = {theme, order:participantOrder(), entries:[], guesses:[], turn:0};
@@ -403,11 +431,12 @@ const EventEngine = (() => {
   }
   function questionIntro(){
     choosePartner('質問する相手を選ぼう', other=>{
-      const bag=shuffle(POOLS.question.data);let changes=0;
+      const bag=previewing?shuffle(POOLS.question.data):RecentTopics.order('theme-question',POOLS.question.data);let changes=0;
       function offer(){
         screen(`${members[other].name}に聞く質問を選ぼう`,`${members[owner].name}が、ゲームから出た3つの質問から1つを選びます。`);
         const grid=node('div',undefined,'theme-grid');
-        bag.splice(0,3).forEach(question=>grid.append(button(question,()=>{
+        const offered=bag.splice(0,3);if(!previewing)RecentTopics.remember('theme-question',offered);
+        offered.forEach(question=>grid.append(button(question,()=>{
           screen('この質問を聞いてみよう！',`${members[owner].name} → ${members[other].name}`);
           el('event-content').append(node('div',question,'single-theme'));
           el('event-actions').append(button('話し終わった！ →',finish));focusFirst();
@@ -504,7 +533,8 @@ const EventEngine = (() => {
   ];
   // 初回＋入れ替え3回は重複なし。上限はこのカードの開始前だけに適用。
   function chooseSingleTheme(title, pool, describe, begin) {
-    const candidates=shuffle(pool).slice(0,4);
+    const candidates=previewing?shuffle(pool).slice(0,4):RecentTopics.order(themeGroup(pool),pool).slice(0,4);
+    if(!previewing)RecentTopics.remember(themeGroup(pool),[candidates[0]]);
     let index=0,committed=false;
     screen(title,'ランダムなお題で挑戦！ 入れ替えは開始前に3回まで。');
     const shown=node('div',describe(candidates[index]),'single-theme');shown.setAttribute('role','status');
@@ -514,7 +544,7 @@ const EventEngine = (() => {
     });
     const change=button('お題を入れ替える（残り3回）',b=>{
       if(committed||index>=3)return;
-      index++;shown.textContent=describe(candidates[index]);
+      index++;if(!previewing)RecentTopics.remember(themeGroup(pool),[candidates[index]]);shown.textContent=describe(candidates[index]);
       b.textContent=index===3?'入れ替えは残り0回':`お題を入れ替える（残り${3-index}回）`;
       b.disabled=index===3;
     },'text-button');
@@ -546,7 +576,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     },'choice-button')));
     el('event-content').append(grid);focusFirst();
   }
-  function freeYamanoteIntro(themes=shuffle([...new Set(YAMANOTE_THEMES)]).slice(0,3)) {
+  function freeYamanoteIntro(themes=recentDraw('theme-food',YAMANOTE_THEMES,3)) {
     screen('山手線ゲームのお題を選ぼう','この中から選んでも、好きなお題で遊んでもOK！');
     const grid=node('div',undefined,'theme-grid');
     themes.forEach(theme=>grid.append(button(theme,()=>showYamanoteTheme(theme,()=>freeYamanoteIntro(themes)),'choice-button')));
@@ -569,7 +599,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     '居酒屋のメニュー', 'カタカナの言葉'
   ];
   function foodIntro() {
-    const theme = YAMANOTE_THEMES[Math.floor(Math.random() * YAMANOTE_THEMES.length)];
+    const theme = recentDraw('theme-food',YAMANOTE_THEMES,1)[0];
     showYamanoteTheme(theme);
   }
   function showYamanoteTheme(theme,back) {
@@ -583,7 +613,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   function gestureIntro() {
     screen(`${members[owner].name}だけ画面を見てね`,'ほかの人は画面を見ずに待っていてね。準備ができたらお題を表示。');
     el('event-actions').append(button('お題を見る →',()=>{
-      const theme=shuffle(GESTURE_THEMES)[0];
+      const theme=recentDraw('theme-gesture',GESTURE_THEMES,1)[0];
       screen('ジェスチャーのお題',theme);
       el('event-actions').append(button('お題を隠して20秒スタート',()=>{
         screen('何のジェスチャー？',`${members[owner].name}が声を使わずに表現！ みんなで答えを言おう。`);
@@ -605,7 +635,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   function syncIntro(round=1) {
     screen('以心伝心チャレンジ',`${round} / 3回目。${members[owner].name}がお題を選ぼう。全員が秘密で入力して、最後に同時公開！`);
     const grid=node('div',undefined,'theme-grid');
-    shuffle(SYNC_THEMES).slice(0,3).forEach(theme=>grid.append(button(theme,()=>syncInput(theme,round,[],0),'choice-button')));
+    recentDraw('theme-sync',SYNC_THEMES,3).forEach(theme=>grid.append(button(theme,()=>syncInput(theme,round,[],0),'choice-button')));
     el('event-content').append(grid);focusFirst();
   }
   function syncInput(theme,round,answers,turn) {
@@ -750,7 +780,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     validateCatalog(data);applyCatalog(data);
   }
   const editor = {
-    getData:snapshot, save:saveCatalog, receive:receiveCatalog,
+    getData:snapshot, save:saveCatalog, receive:receiveCatalog, validate:validateCatalog,
     getActions:()=>({...ACTIONS}),
     getPoolMeta:()=>Object.fromEntries(Object.entries(POOLS).map(([k,v])=>[k,{label:v.label,min:v.min,width:v.width}])),
     getMessage:()=>storageMessage
@@ -758,5 +788,5 @@ ${t[1]} ／ ${t[2]}`,theme=>{
 
   el('event-skip').addEventListener('click', finish);
   el('event-dialog').addEventListener('cancel', event => {event.preventDefault();finish();});
-  return {tileType,open,reset,isBusy:()=>!!done,getCatalog:()=>TOPICS.map(topic=>[...topic]),editor};
+  return {tileType,open,reset,preview,isPreview:()=>previewing,getCheckpoint:()=>checkpoint?JSON.parse(JSON.stringify(checkpoint)):null,isBusy:()=>!!done,getCatalog:()=>TOPICS.map(topic=>[...topic]),editor};
 })();

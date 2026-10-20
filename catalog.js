@@ -2,7 +2,8 @@
 // 静的アプリの簡易ロック。編集データは共有サーバーに保存します。
 (() => {
   const $ = id => document.getElementById(id);
-  let unlocked = false, dirty = false, saving = false;
+  let unlocked = false, dirty = false, saving = false, pendingRestore=null;
+  const BACKUP_KEY='nomi-catalog-sets-v1';
   const actions = EventEngine.editor.getActions();
   const poolMeta = EventEngine.editor.getPoolMeta();
   function make(tag, text, cls) {
@@ -16,7 +17,7 @@
     $('topic-total').textContent=`全${count}種類 · ${Math.min(6,count)}枚から選ぼう`;
   }
   function lock() {
-    unlocked=false;dirty=false;SharedCatalog.logout();
+    unlocked=false;dirty=false;pendingRestore=null;$('restore-review').hidden=true;SharedCatalog.logout();
     $('catalog-password').value='';$('catalog-error').textContent='';
     $('catalog-login').hidden=false;$('catalog-unlocked').hidden=true;
     $('catalog-list').replaceChildren();$('catalog-detail').replaceChildren();
@@ -38,7 +39,7 @@
       card.append(make('span',`${String(index+1).padStart(2,'0')} · ${topic[3]==='drink'?'飲む系':'飲まない系'}`,'eyebrow'),make('strong',topic[0],'catalog-card-title'),make('span',topic[1],'catalog-card-body'),make('span','詳細・テーマ一覧・編集 →','catalog-card-link'));
       $('catalog-list').append(card);
     });
-    boardCount();
+    boardCount();renderBackups();
   }
   function editCard(index){
     if(!unlocked)return;
@@ -108,13 +109,24 @@
       }));
     }
     renderMode();renderThemes();
+    const previewArea=make('div',undefined,'preview-tools');
+    const countLabel=make('label','お試しの人数');const count=make('select');count.id='preview-count';
+    [2,3,4].forEach(n=>{const o=make('option',`${n}人`);o.value=n;count.append(o);});countLabel.append(count);
+    const test=button('このカードを試す',()=>{
+      if(saving)return;
+      try{
+        const candidate=JSON.parse(JSON.stringify(draft));candidate.topics[index]=[...topic];
+        EventEngine.preview(candidate,index,Number(count.value),()=>{test.focus({preventScroll:true});});
+      }catch(e){status.textContent=e.message;}
+    });test.id='card-preview';previewArea.append(countLabel,test,make('p','未保存の編集内容でも試せます。本番の駒・杯数・共有設定は変わりません。','note'));
+    form.append(previewArea);
     const save=make('button','変更を保存','primary');save.type='submit';save.id='editor-save';
     form.append(status,save,make('p','保存するとゲームに反映します。共有サーバーに保存し、他の端末にも反映します。','note'));
     if(!isNew)form.append(button('このカードを削除',async()=>{
       if(saving||!window.confirm(`「${draft.topics[index][0]}」を削除しますか？`))return;
       saving=true;form.inert=true;
       const next=EventEngine.editor.getData();next.topics.splice(index,1);
-      try{await EventEngine.editor.save(next);dirty=false;render();$('catalog-notice').textContent='カードを削除しました。';}
+      try{await saveWithBackup(next);dirty=false;render();$('catalog-notice').textContent='カードを削除しました。';}
       catch(e){status.textContent=e.message;}finally{saving=false;form.inert=false;}
     },'text-button danger-button'));
     form.addEventListener('submit',async event=>{
@@ -124,7 +136,7 @@
       const candidate=JSON.parse(JSON.stringify(draft));
       for(const [key,meta] of Object.entries(poolMeta))candidate.pools[key]=candidate.pools[key].map(row=>meta.width===1?row.trim():row.map(v=>v.trim()));
       save.disabled=true;saving=true;form.inert=true;
-      try{await EventEngine.editor.save(candidate);dirty=false;render();$('catalog-notice').textContent='保存しました。次に引くカードから反映されます。';}
+      try{await saveWithBackup(candidate);dirty=false;render();$('catalog-notice').textContent='保存しました。次に引くカードから反映されます。';}
       catch(e){status.textContent=e.message;status.scrollIntoView({block:'nearest'});}
       finally{save.disabled=false;saving=false;form.inert=false;}
     });
@@ -145,13 +157,71 @@
   $('catalog-filter').addEventListener('change',render);
   $('catalog-import').addEventListener('change',async event=>{
     const file=event.target.files[0];if(!file||!unlocked||saving)return;
-    if(!window.confirm('ファイルの内容で、全端末の共有お題を置き換えますか？')){event.target.value='';return;}
-    saving=true;
+    saving=true;pendingRestore=null;$('restore-review').hidden=true;
     try{
       if(file.size>2*1024*1024)throw Error('ファイルは2MB以下にしてください。');
-      const data=JSON.parse(await file.text());await EventEngine.editor.save(data);render();$('catalog-notice').textContent='以前のお題を共有サーバーへ移しました。';
+      const data=JSON.parse(await file.text());
+      if(unlocked&&$('catalog-dialog').open)reviewRestore(data,file.name);
     }catch(e){$('catalog-notice').textContent='取り込みできませんでした：'+e.message;}
     finally{saving=false;event.target.value='';}
+  });
+  function readBackups(){
+    try{
+      const data=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
+      if(!Array.isArray(data))return [];
+      return data.filter(v=>v&&typeof v.name==='string'&&v.name.length<=80&&typeof v.id==='string'&&v.data).slice(0,15);
+    }catch{return [];}
+  }
+  function storeBackup(data,name,automatic=false){
+    EventEngine.editor.validate(data);
+    const all=readBackups();
+    if(!automatic&&all.filter(v=>!v.automatic).length>=10)throw Error('名前付きセットは10件までです。不要なセットを削除してください。');
+    const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2),name,automatic,data:JSON.parse(JSON.stringify(data)),savedAt:new Date().toISOString()};
+    const next=[entry,...all];let auto=0;
+    try{localStorage.setItem(BACKUP_KEY,JSON.stringify(next.filter(v=>!v.automatic||++auto<=5)));}
+    catch{throw Error('変更前の設定をこの端末に保存できません。不要なセットを削除するか、ブラウザの保存設定を確認してください。');}
+    return entry;
+  }
+  async function saveWithBackup(data){
+    EventEngine.editor.validate(data);
+    storeBackup(EventEngine.editor.getData(),'変更前 '+new Date().toLocaleString('ja-JP'),true);
+    await EventEngine.editor.save(data);
+  }
+  function download(data){
+    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    const a=make('a');a.href=url;a.download='nomi-catalog-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function reviewRestore(data,name){
+    pendingRestore=null;$('restore-review').hidden=true;
+    EventEngine.editor.validate(data);pendingRestore=JSON.parse(JSON.stringify(data));
+    $('restore-summary').textContent=`「${name}」：カード${data.topics.length}枚／テーマ計${Object.values(data.pools).reduce((n,v)=>n+v.length,0)}件。現在のカード${EventEngine.getCatalog().length}枚を置き換えます。変更前の設定は履歴に保存します。`;
+    $('restore-titles').replaceChildren(...data.topics.map(t=>make('li',t[0])));
+    $('restore-review').hidden=false;$('restore-review').scrollIntoView({block:'nearest'});
+  }
+  function renderBackups(){
+    const list=$('backup-list');list.replaceChildren();
+    for(const entry of readBackups()){
+      const row=make('div',undefined,'backup-row');row.append(make('strong',entry.name));
+      row.append(button('内容を確認',()=>{try{reviewRestore(entry.data,entry.name);}catch(e){$('backup-status').textContent=e.message;}}),button('JSON保存',()=>download(entry.data)),button('削除',()=>{
+        if(saving||!window.confirm(`「${entry.name}」をこの端末から削除しますか？`))return;
+        try{localStorage.setItem(BACKUP_KEY,JSON.stringify(readBackups().filter(v=>v.id!==entry.id)));renderBackups();}catch{$('backup-status').textContent='削除できませんでした。';}
+      }));list.append(row);
+    }
+    if(!list.children.length)list.append(make('p','まだ保存したセット・履歴はありません。','note'));
+  }
+  $('catalog-export').addEventListener('click',()=>{if(unlocked)download(EventEngine.editor.getData());});
+  $('backup-save').addEventListener('click',()=>{
+    if(!unlocked||saving)return;
+    try{const name=$('backup-name').value.trim();if(!name)throw Error('セット名を入力してください。');storeBackup(EventEngine.editor.getData(),name);$('backup-name').value='';renderBackups();$('backup-status').textContent='この端末にセットを保存しました。別の端末へ移す場合はJSON保存を使ってください。';}
+    catch(e){$('backup-status').textContent=e.message;}
+  });
+  $('restore-cancel').addEventListener('click',()=>{if(saving)return;pendingRestore=null;$('restore-review').hidden=true;});
+  $('restore-apply').addEventListener('click',async()=>{
+    if(!unlocked||saving||!pendingRestore)return;
+    saving=true;$('catalog-unlocked').inert=true;
+    try{await saveWithBackup(pendingRestore);pendingRestore=null;$('restore-review').hidden=true;render();$('catalog-notice').textContent='共有お題を復元しました。他の端末にも反映されます。';}
+    catch(e){$('catalog-notice').textContent=e.message;}
+    finally{saving=false;$('catalog-unlocked').inert=false;}
   });
   $('catalog-add').addEventListener('click',()=>editCard(null));
   $('catalog-close').addEventListener('click',close);
