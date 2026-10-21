@@ -119,3 +119,6 @@ button{touch-action:manipulation}
 @media(prefers-reduced-motion:no-preference){#turn-banner{animation:turn-arrive .3s ease-out}.near-goal,.goal-near{animation:goal-pulse 1.5s ease-in-out infinite}.shuffle-stack span{animation:shuffle-cards .65s ease-in-out infinite}@keyframes turn-arrive{from{opacity:0;translate:0 -18px}to{opacity:1;translate:0 0}}@keyframes goal-pulse{50%{filter:brightness(1.4)}}@keyframes shuffle-cards{0%,100%{transform:translateX(-35px) rotate(-12deg)}50%{transform:translateX(35px) rotate(12deg)}}}
 @media(max-width:600px){#turn-banner{padding:14px;gap:12px}#turn-announcement{font-size:19px}#turn-avatar{font-size:32px}.game-top h2{font-size:14px}.game-tools{gap:6px}.game-tools button{padding:9px 11px}#save-status{font-size:12px}#resume-panel{padding:20px}#restore-review{padding:16px}}
 #event-content{position:relative}.shuffle-stack{position:absolute;inset:0;z-index:2;height:100%;min-height:180px}
+
+/* Keep numbered card instructions readable on narrow screens. */
+.revealed-topic p,.event-description{white-space:pre-line;line-height:1.75;}
