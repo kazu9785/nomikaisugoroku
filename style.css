@@ -122,3 +122,5 @@ button{touch-action:manipulation}
 
 /* Keep numbered card instructions readable on narrow screens. */
 .revealed-topic p,.event-description{white-space:pre-line;line-height:1.75;}
+
+.role-strip{padding:12px;border:1px solid #55d9e7;border-radius:12px;color:#b6f7ff;line-height:1.6;overflow-wrap:anywhere}.rule-copy{white-space:pre-line;line-height:1.8}.help-steps{padding-left:24px}.help-steps li{padding:8px 0}.help-steps p{line-height:1.7}#help-dialog{max-width:540px;width:calc(100% - 32px);max-height:85dvh;overflow:auto}#help-dialog::backdrop{background:#050718dd}#event-content textarea{width:100%;box-sizing:border-box;font-size:16px}.update-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.update-tools p{flex-basis:100%}

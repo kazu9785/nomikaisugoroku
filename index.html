@@ -2,28 +2,30 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>飲みすごろく</title><link rel="stylesheet" href="style.css?v=clear-instructions-1">
-<script src="config.js" defer></script>
-  <script src="questions.js" defer></script>
-<script src="recent.js?v=clear-instructions-1" defer></script>
-<script src="pwa.js?v=clear-instructions-1" defer></script>
-<script src="events.js?v=clear-instructions-1" defer></script>
-<script src="audio.js?v=mobile-audio-2" defer></script>
-<script src="game.js?v=clear-instructions-1" defer></script>
-<script src="shared.js" defer></script>
-<script src="catalog.js?v=backup-preview-1" defer></script>
+<title>飲みすごろく</title><link rel="stylesheet" href="style.css?v=v-fdafc0d032be">
+<script src="config.js?v=v-fdafc0d032be" defer></script>
+  <script src="questions.js?v=v-fdafc0d032be" defer></script>
+<script src="recent.js?v=v-fdafc0d032be" defer></script>
+<script src="pwa.js?v=v-fdafc0d032be" defer></script>
+<script src="rules.js?v=v-fdafc0d032be" defer></script>
+<script src="events.js?v=v-fdafc0d032be" defer></script>
+<script src="audio.js?v=v-fdafc0d032be" defer></script>
+<script src="game.js?v=v-fdafc0d032be" defer></script>
+<script src="shared.js?v=v-fdafc0d032be" defer></script>
+<script src="catalog.js?v=v-fdafc0d032be" defer></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png" type="image/png">
 <meta name="theme-color" content="#101225">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="飲みすごろく">
+<script src="guidance.js?v=v-fdafc0d032be" defer></script>
 </head>
 <body>
-<header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>飲み<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><div class="header-badge">NEON NIGHT</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
+<header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>飲み<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><button id="help-open" class="text-button" type="button">遊び方</button><div class="header-badge">NEON NIGHT</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
 <main>
 <details id="game-settings" class="game-settings"><summary>音・共有設定</summary><div class="settings-content"><div class="sound-bar"><button id="sound-toggle" class="text-button" type="button" aria-pressed="true">♪ 音 ON</button><button id="bgm-toggle" class="text-button" type="button" aria-pressed="false">BGM OFF</button><button id="sound-test" class="text-button" type="button">音を再開・テスト</button><label for="sound-volume">音量</label><input id="sound-volume" type="range" min="0" max="100" value="35" aria-label="音量"><span id="audio-status" class="audio-status" role="status"></span></div>
-<div class="sync-strip"><span id="sync-status" role="status">共有データを読み込み中…</span><button id="legacy-export" class="text-button" type="button" hidden>以前の編集をファイルに保存</button><button id="sync-refresh" class="text-button" type="button">共有データを更新</button></div>
+<div class="update-tools"><span id="app-version" class="note"></span><button id="game-update" class="text-button" type="button">ゲームを最新版に更新</button><p id="update-status" class="note" role="status"></p></div><div class="sync-strip"><span id="sync-status" role="status">共有データを読み込み中…</span><button id="legacy-export" class="text-button" type="button" hidden>以前の編集をファイルに保存</button><button id="sync-refresh" class="text-button" type="button">共有データを更新</button></div>
 </div></details>
 <details id="install-panel" class="game-settings"><summary>ホーム画面に追加</summary><div class="settings-content"><p id="install-help" class="note"></p><button id="install-app" class="text-button" type="button" hidden>アプリを追加</button><p class="note">ホーム画面のアイコンから起動できます。起動にはインターネット接続が必要です。</p></div></details>
 <section id="resume-panel" class="panel" hidden><h2>前回の続きから遊ぶ？</h2><p id="resume-info"></p><button id="resume-game" class="primary">続きから再開 →</button><button id="discard-game" class="text-button">前回の記録を削除</button><p class="note">この端末・このURLに保存したゲームです。お題の途中は同じカードの最初から再開します。</p></section>
@@ -43,6 +45,7 @@
 <dialog id="event-dialog" aria-labelledby="event-title">
   <div class="event-top"><span id="event-label" class="eyebrow"></span><button id="event-skip" class="text-button" type="button">パス</button></div>
   <h2 id="event-title"></h2>
+  <p id="event-roles" class="role-strip" aria-live="polite"></p>
   <p id="event-description" class="event-description"></p>
   <div id="event-content"></div>
   <div id="event-actions"></div><details class="drink-tracker"><summary>飲んだ杯数を記録</summary><div id="event-drink-counts"></div></details>
@@ -72,4 +75,5 @@
 <dialog id="goal-dialog" aria-labelledby="goal-title"><div id="confetti" aria-hidden="true"></div><span class="eyebrow">CONGRATULATIONS</span><div id="goal-avatar" aria-hidden="true"></div><h2 id="goal-title"></h2><p id="goal-person"></p><div id="goal-drinks"></div><button id="goal-continue" class="primary">続ける →</button></dialog>
 <div id="turn-banner" role="status" aria-live="polite" hidden><span id="turn-avatar" aria-hidden="true"></span><div><small>端末を渡してね</small><strong id="turn-announcement"></strong></div></div>
 <footer>飲みすごろく · NEON NIGHT</footer>
+<dialog id="help-dialog" aria-labelledby="help-title"><h2 id="help-title">4ステップで遊べるよ！</h2><ol class="help-steps"><li><strong>サイコロを振る</strong><p>自分の番になったら長押しして離そう。出目の数だけ駒が進むよ。</p></li><li><strong>カードを1枚選ぶ</strong><p>裏向きのカードを選び、参加する人と説明を確認しよう。</p></li><li><strong>お題で遊ぶ</strong><p>画面の案内に従って進めよう。秘密の回答は、名前が出た人だけ画面を見てね。難しいお題はパスしてOK。</p></li><li><strong>次の人に交代</strong><p>お題を終えて盤面に戻ったら、「次は〇〇の番へ」を押して端末を渡そう。</p></li></ol><p class="note">杯数は＋／−で手動記録。ゴールはぴったり到着、余った目は折り返すよ。「中断」で保存し、同じ端末・URLで再開できるよ。</p><button id="help-close" class="primary" type="button">わかった・ゲームに戻る</button></dialog>
 </body></html>

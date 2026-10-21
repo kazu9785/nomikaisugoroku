@@ -97,6 +97,8 @@ function buildBoard(){
  });
 }
 function render() {
+  if(players.length){const nextPlayer=Array.from({length:players.length},(_,i)=>players[(current+i+1)%players.length]).find(p=>p.rank===null);$('next').textContent=nextPlayer?'次は'+nextPlayer.name+'の番へ →':'結果を見る →';}
+
  if(!$('board').querySelector('.cell'))buildBoard();
  $('board').querySelectorAll('.cell').forEach(cell=>{
   const position=Number(cell.dataset.position);cell.classList.toggle('current',players[current].position===position);

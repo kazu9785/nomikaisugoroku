@@ -222,7 +222,7 @@ const EventEngine = (() => {
   ];
   let members = [], owner = 0, done = null, serial = 0;
   let drinkBag = [], talkBag = [], pairBag = [];
-  let checkpoint=null, previewing=false;
+  let checkpoint=null, previewing=false, activeTopic=null;
   const checkpointChanged=()=>{if(!previewing&&typeof saveGame==='function')saveGame();};
   const el = id => document.getElementById(id);
   const shuffle = values => {
@@ -247,6 +247,7 @@ const EventEngine = (() => {
   }
   function button(text, action, cls = 'primary') {
     const n = node('button', text, cls); n.type = 'button';
+    if(action===finish)n.textContent=previewing?'お試しを終了して編集に戻る':text.includes('話し')?'話し終わった・盤面へ戻る':text.includes('一致')?text+'（盤面へ）':'お題を終えて盤面へ戻る';
     const token = serial;
     n.addEventListener('click', () => { if (token === serial && done) action(n); });
     return n;
@@ -257,6 +258,8 @@ const EventEngine = (() => {
     el('event-description').textContent = description;
     el('event-content').replaceChildren(); el('event-actions').replaceChildren();
     el('event-dialog').scrollTop = 0;
+    el('event-roles').textContent=members.length?'操作する人：'+members[owner].name:'';if(activeTopic)showRoles(activeTopic);
+    if(title.includes('に端末を渡してね')){el('event-roles').textContent='画面を見る人：'+title.split('に端末')[0]+'だけ';el('event-description').textContent=description+'\nほかの人は画面を見ずに待ってね。本人が受け取ってからボタンを押してください。';}
   }
   function focusFirst() {
     const control = el('event-content').querySelector('button, input') || el('event-actions').querySelector('button');
@@ -270,7 +273,7 @@ const EventEngine = (() => {
   }
   function reset() {
     stopClock();
-    serial++; done = null; checkpoint=null; drinkBag = []; talkBag = []; pairBag = [];
+    serial++; done = null; checkpoint=null; activeTopic=null; drinkBag = []; talkBag = []; pairBag = [];
     if (el('event-dialog').open) el('event-dialog').close();
   }
   function result(title, description, toast, details = []) {
@@ -301,7 +304,17 @@ const EventEngine = (() => {
     const games = {timer:timerIntro, safe:safeIntro, pairs:pairIntro, story:storyIntro, nominate:()=>nominateIntro(topic), roulette:rouletteIntro, question:questionIntro, rps:rpsIntro, numbers:numberIntro, coin:coinIntro, free:freeGameIntro, food:foodIntro, taste:tasteIntro, gesture:gestureIntro, drawing:drawingIntro, praise:praiseIntro, sync:syncIntro};
     games[topic[4]]();focusFirst();
   }
+  function showRoles(topic){
+    const name=members[owner].name,others=members.filter((_,i)=>i!==owner).map(p=>p.name).join('・'),all=members.map(p=>p.name).join('・');
+    const action=topic[4];let text='進める人：'+name+' ／ 参加：'+all;
+    if(action==='drawing'||action==='gesture')text=(action==='drawing'?'描く人：':'演じる人：')+name+' ／ 答える人：'+others;
+    else if(['question','nominate','coin','rps','taste','pairs'].includes(action))text='相手を選ぶ人：'+name+' ／ 相手候補：'+others;
+    else if(action==='praise')text='ほめられる人：'+name+' ／ ほめる人：'+others;
+    else if(action==='roulette')text='カードを引いた人：'+name+' ／ 抽選対象：'+others;
+    el('event-roles').textContent=text;
+  }
   async function showTopic(topic){
+    activeTopic=topic;showRoles(topic);
     const revealSerial=serial,motion=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const detail = node('div', undefined, 'revealed-topic');
     detail.append(node('span', topic[3] === 'drink' ? 'DRINK / 飲む系' : 'TALK / 飲まない系', 'eyebrow'), node('h3', topic[0]), node('p', topic[1]), node('p', topic[2], 'toast-result'));
@@ -328,6 +341,7 @@ const EventEngine = (() => {
     el('event-dialog').showModal();showTopic(TOPICS[index]);focusFirst();
   }
   function cards() {
+    activeTopic=null;
     screen(`${members[owner].name}、1枚選んで！`, '裏向きカードから、気になる1枚をタップ。何が出るかは開いてからのお楽しみ。');
     // 毎回、飲む系3枚＋飲まない系3枚を混ぜる。裏面は全て同じ。
     function draw(kind,count){return recentDraw('cards',TOPICS.filter(t=>t[3]===kind),count);}
@@ -420,7 +434,7 @@ const EventEngine = (() => {
         scores.push({index, seconds, difference:Math.abs(Math.round(seconds * 100) - 1000)});
         if (turn + 1 < order.length) {
           screen('記録したよ！', `結果は最後に発表。${members[order[turn + 1]].name}に端末を渡してください。`);
-          el('event-actions').append(button('受け取った →', () => timerTurn(order, scores, turn + 1))); focusFirst();
+          el('event-actions').append(button('本人が受け取った・次へ →', () => timerTurn(order, scores, turn + 1))); focusFirst();
         } else {
           const worst = Math.max(...scores.map(s => s.difference));
           const last = scores.filter(s => s.difference === worst).map(s => members[s.index].name);
@@ -440,7 +454,7 @@ const EventEngine = (() => {
   }
   function pairHandoff(team, questions, answers, turn) {
     screen(`${members[team[turn]].name}に端末を渡してね`, '相手は画面を見ずに待っていてね。3問の回答は最後まで秘密！');
-    el('event-actions').append(button('自分だけで画面を見る →',()=>pairQuestion(team,questions,answers,turn,0)));focusFirst();
+    el('event-actions').append(button('本人が受け取った・次へ →',()=>pairQuestion(team,questions,answers,turn,0)));focusFirst();
   }
   function pairQuestion(team, questions, answers, turn, q) {
     screen(questions[q][0], `${members[team[turn]].name}の回答 · ${q+1} / 3問`);
@@ -504,7 +518,7 @@ const EventEngine = (() => {
   function storyHandoff(state) {
     const index = state.order[state.turn];
     screen(`${members[index].name}に端末を渡してね`, `テーマ：${state.theme}。ほかの人は画面を見ずに待っていてね。`);
-    el('event-actions').append(button('受け取った・入力する →', () => storyInput(state)));
+    el('event-actions').append(button('本人が受け取った・次へ →', () => storyInput(state)));
     focusFirst();
   }
   function storyInput(state) {
@@ -650,7 +664,7 @@ const EventEngine = (() => {
   // 秘密の選択は毎回引き渡し画面を挟む。前の回答を残さない。
   function secretChoices(order, title, options, complete, answers=[], turn=0) {
     screen(`${members[order[turn]].name}に端末を渡してね`,title+'。ほかの人に見えないように選ぼう。');
-    el('event-actions').append(button('受け取った →',()=>{
+    el('event-actions').append(button('本人が受け取った・次へ →',()=>{
       screen(title,`${members[order[turn]].name}の選択`);
       const grid=node('div',undefined,'choice-grid');let locked=false;
       options.forEach((option,i)=>grid.append(button(option,()=>{
@@ -747,6 +761,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
     ['山手線ゲーム','ジャックポット','どすこい','わっしょい','二者択一','これ以外でやりたい飲みゲーム'].forEach(name=>grid.append(button(name,()=>{
       if(name==='山手線ゲーム'){freeYamanoteIntro();return;}
       screen(name,name==='これ以外でやりたい飲みゲーム'?'みんなで遊びたいゲームを決めて始めよう。':'みんなでルールを確認して始めよう。');
+      PartyRules.mount(el('event-content'),name);
       el('event-content').append(node('p','始める前に、順番・進め方・負けになる条件を全員でそろえよう。この画面ではゲーム名だけを表示します。みんなで遊び、負けた人が決まったら下の終了ボタンで盤面に戻ってね。'));
       el('event-actions').append(button('ゲーム終了・盤面に戻る →',finish),button('ゲームを選び直す',freeGameIntro,'text-button'));
       focusFirst();
@@ -781,7 +796,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   }
   function showYamanoteTheme(theme,back) {
     screen('山手線ゲーム', 'テーマに合う言葉を順番に1つずつ答えよう。同じ答え・テーマ違い・答えに詰まった人が負けです。順番とテンポは始める前に決めてね。');
-    el('event-content').append(node('div', theme, 'yamanote-theme'));
+    el('event-content').append(node('div', theme, 'yamanote-theme'));PartyRules.mount(el('event-content'),'山手線ゲーム');
     el('event-actions').append(button('ゲーム終了・盤面に戻る →', finish));
     if(back)el('event-actions').append(button('お題を選び直す',back,'text-button'));
     focusFirst();
@@ -818,7 +833,7 @@ ${t[1]} ／ ${t[2]}`,theme=>{
   function syncInput(theme,round,answers,turn) {
     const order=participantOrder(),index=order[turn];
     screen(`${members[index].name}に端末を渡してね`,'前の答えは隠しています。');
-    el('event-actions').append(button('受け取った →',()=>{
+    el('event-actions').append(button('本人が受け取った・次へ →',()=>{
       screen(theme,`${members[index].name}の答え（30文字まで）`);
       const input=node('input');input.maxLength=30;input.setAttribute('aria-label','答え');input.setAttribute('autocomplete','off');
       const error=node('p','','input-error');error.setAttribute('role','alert');el('event-content').append(input,error);let locked=false;
