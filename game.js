@@ -66,13 +66,15 @@ function start(names) {
   announceTurn();
 }
 
-// 外周24マスから内側へ。座標は [列, 行]。
+// 6×6の外周から内側へ。STARTと30マスを一続きに配置する。
 const ROUTE=[];
-for(let x=0;x<5;x++)ROUTE.push([x,0]);
-for(let y=1;y<9;y++)ROUTE.push([4,y]);
-for(let x=3;x>=0;x--)ROUTE.push([x,8]);
-for(let y=7;y>=1;y--)ROUTE.push([0,y]);
-ROUTE.push([1,1],[2,1],[3,1],[3,2],[3,3],[3,4],[3,5]);
+for(let left=0,right=5,top=0,bottom=5;left<=right&&top<=bottom;left++,right--,top++,bottom--){
+ for(let x=left;x<=right;x++)ROUTE.push([x,top]);
+ for(let y=top+1;y<=bottom;y++)ROUTE.push([right,y]);
+ if(top<bottom)for(let x=right-1;x>=left;x--)ROUTE.push([x,bottom]);
+ if(left<right)for(let y=bottom-1;y>top;y--)ROUTE.push([left,y]);
+}
+ROUTE.length=GOAL+1;
 const reducedMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setDice(value){
  const patterns=[[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]];
@@ -83,14 +85,14 @@ function setDice(value){
 function buildBoard(){
  $('board').replaceChildren();
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
- svg.setAttribute('viewBox','0 0 500 900');svg.setAttribute('preserveAspectRatio','none');svg.classList.add('route-lines');svg.setAttribute('aria-hidden','true');
+ svg.setAttribute('viewBox','0 0 600 600');svg.setAttribute('preserveAspectRatio','none');svg.classList.add('route-lines');svg.setAttribute('aria-hidden','true');
  const points=ROUTE.map(([x,y])=>`${x*100+50},${y*100+50}`).join(' ');
  for(const cls of ['route-glow','route-core','route-flow']){const line=document.createElementNS(ns,'polyline');line.setAttribute('points',points);line.setAttribute('class',cls);svg.append(line);}
  $('board').append(svg);
- const hub=document.createElement('div');hub.className='board-hub';hub.innerHTML='<span class="hub-orbit" aria-hidden="true">☾</span><small>FOLLOW YOUR LUCK</small><strong>NEON<br>NIGHT</strong><span>外周から内側へ<br>ぴったり30でゴール</span>';$('board').append(hub);
+ const scenery=document.createElement('div');scenery.className='board-scenery';scenery.setAttribute('aria-hidden','true');$('board').append(scenery);
  ROUTE.forEach(([x,y],position)=>{
   const cell=document.createElement('div');cell.className='cell'+(position===0||position===GOAL?' special':'');cell.style.gridColumn=x+1;cell.style.gridRow=y+1;cell.dataset.position=position;cell.dataset.type=EventEngine.tileType(position);
-  cell.style.setProperty('--tile-color',position===GOAL?'#ffd778':position<10?'#ff70c5':position<20?'#57e5fa':'#b99aff');
+  cell.style.setProperty('--tile-color',position===GOAL?'#ff70df':['#57e5fa','#8b8cff','#b484ff'][Math.floor(position/3)%3]);
   const label=document.createElement('span');label.className='cell-label';label.textContent=position===0?'START':position===GOAL?'GOAL':String(position).padStart(2,'0');
   const arrow=document.createElement('span');arrow.className='direction';const next=ROUTE[position+1];arrow.textContent=!next?'★':next[0]>x?'→':next[0]<x?'←':next[1]>y?'↓':'↑';
   const tokens=document.createElement('div');tokens.className='tokens';cell.append(label,arrow,tokens);$('board').append(cell);
@@ -106,6 +108,16 @@ function render() {
   const tokens=cell.querySelector('.tokens');tokens.replaceChildren();
   players.forEach((player,i)=>{if(player.position!==position)return;const token=document.createElement('span');token.className='token'+(i===current&&phase==='rolling'?' hopping':'');token.classList.toggle('near-goal',!player.rank&&GOAL-player.position<=5);token.style.setProperty('--player-color',player.color);const emblem=document.createElement('span');emblem.className='pawn-emblem';emblem.textContent=player.icon;token.append(emblem);token.dataset.playerNumber=i+1;token.title=player.name;token.setAttribute('aria-label',player.name);tokens.append(token);});
  });
+  $('player-chips').replaceChildren();
+  players.forEach((player,i)=>{
+    const chip=document.createElement('li');chip.className='player-chip';chip.style.setProperty('--player-color',player.color);
+    const marker=document.createElement('span');marker.className='chip-marker';marker.textContent=String(i+1);marker.setAttribute('aria-hidden','true');
+    const name=document.createElement('span');name.textContent=player.name;name.className='chip-name';
+    chip.append(marker,name);chip.title=player.name+(player.rank?'・'+player.rank+'位':'・あと'+(GOAL-player.position)+'マス');
+    if(i===current&&phase!=='finished'){chip.classList.add('is-current');chip.setAttribute('aria-current','true');}
+    if(player.rank){const rank=document.createElement('small');rank.textContent=player.rank+'位';chip.append(rank);}
+    $('player-chips').append(chip);
+  });
   const playerScroll = $('players').scrollLeft;
   $('players').replaceChildren();
   players.forEach((player, i) => {

@@ -51,3 +51,67 @@ input,select{background:#090f24;border-color:#788ab34d}input:focus,select:focus{
 @media(max-width:360px){.lounge-title{font-size:32px}#board .token{width:12px;height:17px}#board .pawn-emblem{font-size:8px}#board .tokens{gap:1px}#board .cell-label{font-size:10px}.board-hub strong{font-size:22px}}
 @media(max-width:600px) and (max-height:500px){.controls{position:static;border-radius:18px}}
 @media(prefers-reduced-motion:reduce){.primary,#board .cell{transition:none}}
+
+/* Gameplay matches the compact neon-lounge composition. */
+.is-playing header,.is-playing main,.is-playing footer{max-width:720px}
+.is-playing header{padding:20px 24px 12px;justify-content:center;gap:8px}
+.is-playing header{flex-wrap:wrap}.is-playing header>div:first-child{width:100%}
+.is-playing header h1{font-size:clamp(24px,4vw,32px);letter-spacing:1px;text-align:center}
+.is-playing header h1:after{content:' ☾';color:#ffe6a4;text-shadow:0 0 12px #ffd58277}
+.is-playing header p,.is-playing header .eyebrow,.is-playing .header-badge{display:none}
+.is-playing .header-tools{width:100%;margin:0;justify-content:center;gap:8px}
+.is-playing .header-tools .text-button{min-height:36px;font-size:11px;padding:7px 12px}
+.is-playing main{padding:0 24px 24px}
+.is-playing:not(.is-finished) main{padding-bottom:24px}
+#game{display:flex;flex-direction:column;gap:12px}
+#save-status{order:4;text-align:center;margin:0;font-size:11px}
+.game-top{order:3;margin:0;gap:8px}.game-top h2{font-size:12px;color:#b4bfd8}.game-top h2:before{display:none}
+.game-tools button{font-size:11px;min-height:40px;padding:8px 12px}
+#player-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.player-chip{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:44px;padding:8px 7px;border:1px solid color-mix(in srgb,var(--player-color) 65%,#17213e);border-radius:10px;background:linear-gradient(145deg,#12203d,#090e23);box-shadow:inset 0 1px #ffffff15}
+.chip-marker{display:grid;place-items:center;flex:none;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 30% 20%,#fff9,var(--player-color) 55%,#192348);color:#071027;font-size:10px;font-weight:900;box-shadow:0 2px 3px #0006}
+.chip-name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.player-chip small{font-size:10px;white-space:nowrap;color:#ffe3a1}
+.player-chip.is-current{border-color:#d6fbff;box-shadow:0 0 12px color-mix(in srgb,var(--player-color) 30%,transparent),inset 0 -2px var(--player-color)}
+.layout{display:flex;flex-direction:column;gap:18px}.layout>aside{display:contents;position:static}
+.layout .board-panel{order:0;width:100%;margin:0;padding:10px 8px 16px;border:1px solid #55d8f6;border-radius:14px;background:linear-gradient(145deg,#0b1930,#0c1129);box-shadow:inset 0 0 0 3px #0b1025,0 6px 0 #080c1c,0 7px 0 #384d81,0 0 20px #4289ed24}
+.board-panel .legend{display:none}.tile-legend{font-size:10px;justify-content:space-between;margin:0 6px 7px;gap:6px}.tile-legend span:first-child{color:#b6c4e4}
+#board{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));aspect-ratio:1.08;gap:0;isolation:isolate;background:radial-gradient(ellipse at center,#39286244,transparent 70%);border-radius:10px}
+.board-scenery{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:10px;background-image:radial-gradient(circle,#9abfff66 1px,transparent 1.5px);background-size:41px 57px}
+.board-scenery svg{position:absolute;bottom:0;width:100%;height:45%;opacity:.45}.board-moon{position:absolute;top:36%;left:42%;font-size:48px;color:#ffe1a1;text-shadow:0 0 22px #f2b35966}
+#board .cell{margin:4px 3px 9px;padding:6px;border-radius:8px;background:linear-gradient(145deg,color-mix(in srgb,var(--tile-color) 18%,#142747),#10182e);border-color:color-mix(in srgb,var(--tile-color) 75%,#15264a)}
+#board .cell.special{border-radius:8px}#board .cell[data-position="0"]{background:linear-gradient(145deg,#194b67,#10203e);border-color:#68f3ff}
+#board .cell[data-position="30"]{background:linear-gradient(145deg,#6a206e,#311c48);border-color:#ffa6ed;box-shadow:inset 0 2px #fff5,0 5px 0 #411b51,0 7px 0 #100b26,0 0 22px #ff5bdb44}
+#board .cell[data-position="30"] .cell-label{color:#ffd6f6;text-shadow:0 0 8px #f548cf}
+#board .cell-label{font-size:13px}#board .direction{font-size:10px}
+#board .cell:after{content:'';position:absolute;left:5px;right:5px;bottom:1px;height:32%;pointer-events:none;background:linear-gradient(0deg,var(--tile-color),transparent);opacity:.18;clip-path:polygon(0 100%,0 50%,12% 50%,12% 18%,24% 18%,24% 65%,38% 65%,38% 35%,52% 35%,52% 0,65% 0,65% 50%,78% 50%,78% 28%,90% 28%,90% 60%,100% 60%,100% 100%)}
+#board .tokens{left:4px;right:4px;bottom:7px;gap:1px}#board .token{width:19px;height:22px}#board .pawn-emblem{font-size:11px}
+.layout .controls{order:1;position:relative;inset:auto;z-index:auto;width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto auto auto auto;column-gap:20px;row-gap:8px;text-align:center;padding:18px 24px 16px;margin:0;border:1px solid #8079f4;border-radius:20px;background:radial-gradient(ellipse at 60% 40%,#53327a33,transparent 60%),#090f25;box-shadow:inset 0 1px #ffffff14,0 0 20px #7650e619}
+.controls>.eyebrow{display:none}.controls #turn{grid-column:1 / -1;grid-row:1;font-size:22px;line-height:1.4;color:#cbf5ff;text-shadow:0 0 14px #49a4ff88;margin:0;overflow-wrap:anywhere}
+.controls .dice-stage{grid-column:2;grid-row:2;min-height:130px;padding:10px 0 18px;align-self:center}
+.controls #dice{width:84px;height:84px;padding:14px;gap:7px;border-radius:18px}
+.controls .dice-orbit{width:120px;height:94px;top:37px;border-color:#ae78ff;box-shadow:0 0 15px #8756ff88,inset 0 0 16px #8756ff44}
+.controls #dice-caption{display:none}.controls #power-panel{grid-column:1;grid-row:2;margin:0;align-self:center;text-align:left}
+.controls .power-label{font-size:11px;margin-bottom:8px}.controls #power-meter{height:12px;border-radius:4px}.controls #power-fill{background:repeating-linear-gradient(90deg,transparent 0 13px,#091227 13px 16px),linear-gradient(90deg,#5ef4ff,#b287ff,#ff70d8)}
+.controls #power-panel small{display:block;font-size:10px;line-height:1.6;margin-top:8px;color:#bac5df}
+.controls #message{grid-column:1 / -1;grid-row:3;font-size:13px;line-height:1.5;min-height:20px;margin:0;color:#bfcce4}
+.controls #roll,.controls #next{grid-column:1 / -1;grid-row:4;min-height:56px;font-size:17px;margin:4px 0 6px;padding:14px;border-radius:15px;background:linear-gradient(110deg,#d8229d,#bd20c5);box-shadow:inset 0 2px #ffffff50,0 4px 0 #5e1765,0 0 22px #ff46d344;border-color:#ffa9ed}
+.controls:after{content:'✧  サイコロを振ったら、お題カードを選ぼう  ✧';grid-column:1 / -1;grid-row:5;font-size:11px;color:#b8c6e1;line-height:1.6}
+.controls:has(#next:not([hidden])):after{content:'✧  次の人に端末を渡そう  ✧'}
+.controls:has(#power-panel[hidden]) .dice-stage{grid-column:1 / -1}
+.layout>aside>.players-panel{order:2;padding:0;width:100%;border-radius:14px;background:#0b1429;border:1px solid #6076ad55;overflow:hidden}
+.players-panel summary{padding:15px 18px;min-height:48px;cursor:pointer;font-size:13px;color:#c7d8f1}
+.players-panel #players{padding:4px 14px 14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;overflow:visible}
+#players li{min-width:0;display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;padding:12px;border:1px solid #6a79b344;border-radius:12px;margin:0}
+#players .place{grid-column:2;margin:0}#players .drink-control{grid-column:1 / -1;justify-content:space-between;width:100%}#players .player-name{font-size:13px;overflow-wrap:anywhere;white-space:normal}
+.is-playing .game-settings{margin-top:16px}.is-finished .controls{display:none}
+@media(max-width:600px){
+ .is-playing header{padding:12px 12px 10px}.is-playing header h1{font-size:25px}.is-playing main{padding:0 10px 20px}.is-playing:not(.is-finished) main{padding-bottom:20px}
+ #game{gap:10px}#player-chips{gap:5px}.player-chip{min-height:38px;padding:6px 4px;gap:4px}.chip-marker{width:16px;height:16px;font-size:8px}.chip-name{font-size:11px}.player-chip small{font-size:9px}
+ .layout{gap:14px}.layout .board-panel{padding:8px 4px 12px}.tile-legend{font-size:9px;margin:0 4px 5px}#board{aspect-ratio:1}
+ #board .cell{margin:4px 2px 8px;padding:4px 3px;border-radius:7px}#board .cell-label{font-size:10px}#board .direction{font-size:8px}
+ #board .tokens{left:2px;right:2px;bottom:5px;gap:1px}#board .token{width:13px;height:17px}#board .token:before{width:8px;height:8px;top:-5px}#board .pawn-emblem{font-size:8px}#board .token:after{width:9px;height:9px;line-height:8px;font-size:6px;right:-1px}
+ .layout .controls{padding:14px 18px 12px;column-gap:16px;row-gap:5px;border-radius:18px}.controls #turn{font-size:19px}.controls .dice-stage{min-height:105px;padding:8px 0 16px}.controls #dice{width:66px;height:66px;padding:10px;gap:6px;border-radius:15px}.controls .dice-orbit{width:100px;height:72px;top:30px}
+ .controls #roll,.controls #next{font-size:16px;min-height:52px;padding:12px}.controls #message{font-size:12px}.controls:after{font-size:10px}.controls .power-label{font-size:10px}.controls #power-panel small{font-size:9px}.controls #power-meter{height:10px}
+ .players-panel #players{padding:0 10px 10px;gap:7px}#players li{padding:9px;gap:6px}.game-top h2{font-size:11px}.game-tools button{font-size:10px;min-height:40px;padding:8px 10px}
+}
+@media(max-width:360px){#board .cell-label{font-size:9px}#board .token{width:10px;height:15px}#board .tokens{bottom:4px}#board .pawn-emblem{font-size:7px}.chip-marker{width:13px;height:13px}.chip-name{font-size:10px}.controls:after{font-size:9px}}
