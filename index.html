@@ -2,39 +2,40 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>夜ふかしすごろく</title><link rel="stylesheet" href="style.css?v=v-3b2e8eb5095b">
-<script src="config.js?v=v-3b2e8eb5095b" defer></script>
-  <script src="questions.js?v=v-3b2e8eb5095b" defer></script>
-<script src="recent.js?v=v-3b2e8eb5095b" defer></script>
-<script src="pwa.js?v=v-3b2e8eb5095b" defer></script>
-<script src="rules.js?v=v-3b2e8eb5095b" defer></script>
-<script src="events.js?v=v-3b2e8eb5095b" defer></script>
-<script src="audio.js?v=v-3b2e8eb5095b" defer></script>
-<script src="game.js?v=v-3b2e8eb5095b" defer></script>
-<script src="shared.js?v=v-3b2e8eb5095b" defer></script>
-<script src="catalog.js?v=v-3b2e8eb5095b" defer></script>
+<title>夜ふかしすごろく</title><link rel="stylesheet" href="style.css?v=v-0257a2bc760b">
+<script src="config.js?v=v-0257a2bc760b" defer></script>
+  <script src="questions.js?v=v-0257a2bc760b" defer></script>
+<script src="recent.js?v=v-0257a2bc760b" defer></script>
+<script src="pwa.js?v=v-0257a2bc760b" defer></script>
+<script src="rules.js?v=v-0257a2bc760b" defer></script>
+<script src="events.js?v=v-0257a2bc760b" defer></script>
+<script src="audio.js?v=v-0257a2bc760b" defer></script>
+<script src="game.js?v=v-0257a2bc760b" defer></script>
+<script src="shared.js?v=v-0257a2bc760b" defer></script>
+<script src="catalog.js?v=v-0257a2bc760b" defer></script>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png?v=v-3b2e8eb5095b">
-<link rel="icon" href="icon-192.png?v=v-3b2e8eb5095b" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png?v=v-0257a2bc760b">
+<link rel="icon" href="icon-192.png?v=v-0257a2bc760b" type="image/png">
 <meta name="theme-color" content="#101225">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="夜ふかしすごろく">
-<script src="guidance.js?v=v-3b2e8eb5095b" defer></script>
+<script src="guidance.js?v=v-0257a2bc760b" defer></script>
+<link rel="stylesheet" href="lounge.css?v=v-0257a2bc760b">
 </head>
 <body>
 <header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>夜ふかし<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><button id="help-open" class="text-button" type="button">遊び方</button><div class="header-badge">NEON NIGHT</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
 <main>
-<details id="game-settings" class="game-settings"><summary>音・共有設定</summary><div class="settings-content"><div class="sound-bar"><button id="sound-toggle" class="text-button" type="button" aria-pressed="true">♪ 音 ON</button><button id="bgm-toggle" class="text-button" type="button" aria-pressed="false">BGM OFF</button><button id="sound-test" class="text-button" type="button">音を再開・テスト</button><label for="sound-volume">音量</label><input id="sound-volume" type="range" min="0" max="100" value="35" aria-label="音量"><span id="audio-status" class="audio-status" role="status"></span></div>
-<div class="update-tools"><span id="app-version" class="note"></span><button id="game-update" class="text-button" type="button">ゲームを最新版に更新</button><p id="update-status" class="note" role="status"></p></div><div class="sync-strip"><span id="sync-status" role="status">共有データを読み込み中…</span><button id="legacy-export" class="text-button" type="button" hidden>以前の編集をファイルに保存</button><button id="sync-refresh" class="text-button" type="button">共有データを更新</button></div>
-</div></details>
-<details id="install-panel" class="game-settings"><summary>ホーム画面に追加</summary><div class="settings-content"><p id="install-help" class="note"></p><button id="install-app" class="text-button" type="button" hidden>アプリを追加</button><p class="note">ホーム画面のアイコンから起動できます。起動にはインターネット接続が必要です。</p></div></details>
 <section id="resume-panel" class="panel" hidden><h2>前回の続きから遊ぶ？</h2><p id="resume-info"></p><button id="resume-game" class="primary">続きから再開 →</button><button id="discard-game" class="text-button">前回の記録を削除</button><p class="note">この端末・このURLに保存したゲームです。お題の途中は同じカードの最初から再開します。</p></section>
 <section id="setup" class="panel setup">
-<div class="setup-icon" aria-hidden="true">⚄</div><span class="eyebrow">LET'S PLAY</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
+<div class="lounge-hero"><div class="lounge-sky" aria-hidden="true"><span class="lounge-moon"></span><span class="lounge-stars">✦ · ✧ · ✦</span><svg class="lounge-city" viewBox="0 0 600 150" preserveAspectRatio="none"><defs><linearGradient id="city-light" x2="0" y2="1"><stop stop-color="#6444c0"/><stop offset="1" stop-color="#101430"/></linearGradient><pattern id="windows" width="18" height="17" patternUnits="userSpaceOnUse"><rect x="5" y="4" width="3" height="6" fill="#6ceaff" opacity=".55"/></pattern><clipPath id="skyline"><path d="M0 150V85H28V55H52V90H70V38H91V12H95V38H110V112H130V70H150V95H177V62H198V110H220V85H245V120H280V100H310V120H340V80H370V100H390V50H415V27H420V50H438V95H459V70H480V108H500V35H523V5H527V35H548V80H570V60H600V150Z"/></clipPath></defs><g clip-path="url(#skyline)"><rect width="600" height="150" fill="url(#city-light)"/><rect width="600" height="150" fill="url(#windows)"/></g><path d="M0 149H600" stroke="#6ceaff" stroke-width="2"/></svg></div><span class="eyebrow">WELCOME TO THE NEON NIGHT</span><div class="lounge-title">夜ふかし<span>すごろく</span></div><p>今夜はみんなで、サイコロまかせ。</p></div><span class="eyebrow">LET'S PLAY · 2–4 PLAYERS</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
 <form id="setup-form"><label for="count">遊ぶ人数</label><select id="count"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option></select>
 <div id="names"></div><button class="primary" type="submit">ゲームをはじめる →</button></form>
 <p class="note">STARTから30マス先のGOALへ。ぴったり到着でゴール！ 余った目は折り返します。</p>
 </section>
+<details id="game-settings" class="game-settings"><summary>音・共有設定</summary><div class="settings-content"><div class="sound-bar"><button id="sound-toggle" class="text-button" type="button" aria-pressed="true">♪ 音 ON</button><button id="bgm-toggle" class="text-button" type="button" aria-pressed="false">BGM OFF</button><button id="sound-test" class="text-button" type="button">音を再開・テスト</button><label for="sound-volume">音量</label><input id="sound-volume" type="range" min="0" max="100" value="35" aria-label="音量"><span id="audio-status" class="audio-status" role="status"></span></div>
+<div class="update-tools"><span id="app-version" class="note"></span><button id="game-update" class="text-button" type="button">ゲームを最新版に更新</button><p id="update-status" class="note" role="status"></p></div><div class="sync-strip"><span id="sync-status" role="status">共有データを読み込み中…</span><button id="legacy-export" class="text-button" type="button" hidden>以前の編集をファイルに保存</button><button id="sync-refresh" class="text-button" type="button">共有データを更新</button></div>
+</div></details>
+<details id="install-panel" class="game-settings"><summary>ホーム画面に追加</summary><div class="settings-content"><p id="install-help" class="note"></p><button id="install-app" class="text-button" type="button" hidden>アプリを追加</button><p class="note">ホーム画面のアイコンから起動できます。起動にはインターネット接続が必要です。</p></div></details>
 <section id="game" hidden>
 <p id="save-status" class="note" role="status"></p><div class="game-top"><h2>ゴールを目指そう！</h2><div class="game-tools"><button id="pause-game" class="text-button">中断</button><button id="reset" class="text-button">最初から</button></div></div>
 <div class="layout"><div class="panel board-panel"><div class="legend"><span>NEON SPIRAL</span><span>30 STEPS / EXACT FINISH</span></div><div class="tile-legend"><span>♥ 全マスお題カード</span><span id="topic-total">全31種類 · 6枚から選ぼう</span></div><div id="board" aria-label="すごろくの盤面"></div></div>

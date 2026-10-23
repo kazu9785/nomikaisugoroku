@@ -87,7 +87,7 @@ function buildBoard(){
  const points=ROUTE.map(([x,y])=>`${x*100+50},${y*100+50}`).join(' ');
  for(const cls of ['route-glow','route-core','route-flow']){const line=document.createElementNS(ns,'polyline');line.setAttribute('points',points);line.setAttribute('class',cls);svg.append(line);}
  $('board').append(svg);
- const hub=document.createElement('div');hub.className='board-hub';hub.innerHTML='<span class="hub-orbit" aria-hidden="true">✦</span><small>FOLLOW YOUR LUCK</small><strong>NEON<br>NIGHT</strong><span>外周から内側へ<br>ぴったり30でゴール</span>';$('board').append(hub);
+ const hub=document.createElement('div');hub.className='board-hub';hub.innerHTML='<span class="hub-orbit" aria-hidden="true">☾</span><small>FOLLOW YOUR LUCK</small><strong>NEON<br>NIGHT</strong><span>外周から内側へ<br>ぴったり30でゴール</span>';$('board').append(hub);
  ROUTE.forEach(([x,y],position)=>{
   const cell=document.createElement('div');cell.className='cell'+(position===0||position===GOAL?' special':'');cell.style.gridColumn=x+1;cell.style.gridRow=y+1;cell.dataset.position=position;cell.dataset.type=EventEngine.tileType(position);
   cell.style.setProperty('--tile-color',position===GOAL?'#ffd778':position<10?'#ff70c5':position<20?'#57e5fa':'#b99aff');
@@ -104,7 +104,7 @@ function render() {
   const position=Number(cell.dataset.position);cell.classList.toggle('current',players[current].position===position);
   cell.classList.toggle('goal-near',position===GOAL && players.some(p=>!p.rank&&GOAL-p.position<=5));
   const tokens=cell.querySelector('.tokens');tokens.replaceChildren();
-  players.forEach((player,i)=>{if(player.position!==position)return;const token=document.createElement('span');token.className='token'+(i===current&&phase==='rolling'?' hopping':'');token.classList.toggle('near-goal',!player.rank&&GOAL-player.position<=5);token.style.setProperty('--player-color',player.color);token.textContent=player.icon;token.dataset.playerNumber=i+1;token.title=player.name;token.setAttribute('aria-label',player.name);tokens.append(token);});
+  players.forEach((player,i)=>{if(player.position!==position)return;const token=document.createElement('span');token.className='token'+(i===current&&phase==='rolling'?' hopping':'');token.classList.toggle('near-goal',!player.rank&&GOAL-player.position<=5);token.style.setProperty('--player-color',player.color);const emblem=document.createElement('span');emblem.className='pawn-emblem';emblem.textContent=player.icon;token.append(emblem);token.dataset.playerNumber=i+1;token.title=player.name;token.setAttribute('aria-label',player.name);tokens.append(token);});
  });
   const playerScroll = $('players').scrollLeft;
   $('players').replaceChildren();
