@@ -2,35 +2,36 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>夜ふかしすごろく</title><link rel="stylesheet" href="style.css?v=v-091a05a70d8a">
-<script src="config.js?v=v-091a05a70d8a" defer></script>
-  <script src="questions.js?v=v-091a05a70d8a" defer></script>
-<script src="recent.js?v=v-091a05a70d8a" defer></script>
-<script src="pwa.js?v=v-091a05a70d8a" defer></script>
-<script src="rules.js?v=v-091a05a70d8a" defer></script>
-<script src="events.js?v=v-091a05a70d8a" defer></script>
-<script src="audio.js?v=v-091a05a70d8a" defer></script>
-<script src="game.js?v=v-091a05a70d8a" defer></script>
-<script src="shared.js?v=v-091a05a70d8a" defer></script>
-<script src="catalog.js?v=v-091a05a70d8a" defer></script>
+<title>夜ふかしすごろく</title><link rel="stylesheet" href="style.css?v=v-8786bfd3ef1e">
+<script src="config.js?v=v-8786bfd3ef1e" defer></script>
+  <script src="questions.js?v=v-8786bfd3ef1e" defer></script>
+<script src="recent.js?v=v-8786bfd3ef1e" defer></script>
+<script src="pwa.js?v=v-8786bfd3ef1e" defer></script>
+<script src="rules.js?v=v-8786bfd3ef1e" defer></script>
+<script src="events.js?v=v-8786bfd3ef1e" defer></script>
+<script src="audio.js?v=v-8786bfd3ef1e" defer></script>
+<script src="game.js?v=v-8786bfd3ef1e" defer></script>
+<script src="shared.js?v=v-8786bfd3ef1e" defer></script>
+<script src="catalog.js?v=v-8786bfd3ef1e" defer></script>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png?v=v-091a05a70d8a">
-<link rel="icon" href="icon-192.png?v=v-091a05a70d8a" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png?v=v-8786bfd3ef1e">
+<link rel="icon" href="icon-192.png?v=v-8786bfd3ef1e" type="image/png">
 <meta name="theme-color" content="#101225">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="夜ふかしすごろく">
-<script src="guidance.js?v=v-091a05a70d8a" defer></script>
-<link rel="stylesheet" href="lounge.css?v=v-091a05a70d8a">
-<link rel="stylesheet" href="moon.css?v=v-091a05a70d8a">
+<script src="guidance.js?v=v-8786bfd3ef1e" defer></script>
+<link rel="stylesheet" href="lounge.css?v=v-8786bfd3ef1e">
+<link rel="stylesheet" href="moon.css?v=v-8786bfd3ef1e">
+<link rel="stylesheet" href="rooftop.css?v=v-8786bfd3ef1e">
 </head>
 <body>
-<header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>夜ふかし<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><button id="help-open" class="text-button" type="button">遊び方</button><div class="header-badge">月と雲のアトリエ</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
+<header><div><span class="eyebrow">ONE DEVICE · 2–4 PLAYERS</span><h1>夜ふかし<span>すごろく</span></h1><p>今夜はみんなで、サイコロまかせ。</p></div><div class="header-tools"><button id="help-open" class="text-button" type="button">遊び方</button><div class="header-badge">月夜のルーフトップBAR</div><button id="catalog-open" class="text-button" type="button">🔒 お題カード一覧</button></div></header>
 <main>
 <section id="resume-panel" class="panel" hidden><h2>前回の続きから遊ぶ？</h2><p id="resume-info"></p><button id="resume-game" class="primary">続きから再開 →</button><button id="discard-game" class="text-button">前回の記録を削除</button><p class="note">この端末・このURLに保存したゲームです。お題の途中は同じカードの最初から再開します。</p></section>
 <section id="setup" class="panel setup">
-<div class="lounge-hero"><span class="eyebrow">MOON & CLOUD ATELIER</span><div class="lounge-title">夜ふかし<span>すごろく</span></div><p>今夜はみんなで、サイコロまかせ。</p></div><span class="eyebrow">LET'S PLAY · 2–4 PLAYERS</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
+<div class="lounge-hero"><span class="eyebrow">MOONLIT ROOFTOP BAR</span><div class="lounge-title">夜ふかし<span>すごろく</span></div><p>今夜はみんなで、サイコロまかせ。</p></div><span class="eyebrow">LET'S PLAY · 2–4 PLAYERS</span><h2>今夜のメンバーは？</h2><p class="setup-intro">2〜4人、端末ひとつで。名前を入れたらスタート！</p>
 <form id="setup-form"><label for="count">遊ぶ人数</label><select id="count"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option></select>
-<div id="names"></div><button class="primary" type="submit">ゲームをはじめる →</button></form>
+<div id="names"></div><button class="primary" type="submit">☾ スタート →</button></form>
 <p class="note">STARTから30マス先のGOALへ。ぴったり到着でゴール！ 余った目は折り返します。</p>
 </section>
 <section id="game" hidden>
@@ -76,6 +77,6 @@
 </dialog>
 <dialog id="goal-dialog" aria-labelledby="goal-title"><div id="confetti" aria-hidden="true"></div><span class="eyebrow">CONGRATULATIONS</span><div id="goal-avatar" aria-hidden="true"></div><h2 id="goal-title"></h2><p id="goal-person"></p><div id="goal-drinks"></div><button id="goal-continue" class="primary">続ける →</button></dialog>
 <div id="turn-banner" role="status" aria-live="polite" hidden><span id="turn-avatar" aria-hidden="true"></span><div><small>端末を渡してね</small><strong id="turn-announcement"></strong></div></div>
-<footer>夜ふかしすごろく · 月と雲のアトリエ</footer>
+<footer>夜ふかしすごろく · 月夜のルーフトップBAR</footer>
 <dialog id="help-dialog" aria-labelledby="help-title"><h2 id="help-title">4ステップで遊べるよ！</h2><ol class="help-steps"><li><strong>サイコロを振る</strong><p>自分の番になったら長押しして離そう。出目の数だけ駒が進むよ。</p></li><li><strong>カードを1枚選ぶ</strong><p>裏向きのカードを選び、参加する人と説明を確認しよう。</p></li><li><strong>お題で遊ぶ</strong><p>画面の案内に従って進めよう。秘密の回答は、名前が出た人だけ画面を見てね。難しいお題はパスしてOK。</p></li><li><strong>次の人に交代</strong><p>お題を終えて盤面に戻ったら、「次は〇〇の番へ」を押して端末を渡そう。</p></li></ol><p class="note">杯数は＋／−で手動記録。ゴールはぴったり到着、余った目は折り返すよ。「中断」で保存し、同じ端末・URLで再開できるよ。</p><button id="help-close" class="primary" type="button">わかった・ゲームに戻る</button></dialog>
 </body></html>

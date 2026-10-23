@@ -1,5 +1,5 @@
 (()=>{
- const VERSION="v-091a05a70d8a";const $=id=>document.getElementById(id),guide=$('help-dialog');
+ const VERSION="v-8786bfd3ef1e";const $=id=>document.getElementById(id),guide=$('help-dialog');
  $('app-version').textContent='バージョン '+VERSION;
  $('help-open').onclick=()=>guide.showModal();
  function closeGuide(){try{localStorage.setItem('nomi-guide-seen-v1','1');}catch{}guide.close();}
